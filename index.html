@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f1e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="תחרות השקעות">
+  <meta name="description" content="לידרבורד תחרות השקעות - עקוב אחר ביצועי המשתתפים בזמן אמת">
+  <link rel="manifest" href="manifest.json">
+  <title>תחרות השקעות Q2 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #070d1a;
+      --bg-secondary: #0d1628;
+      --bg-card: #111c30;
+      --bg-card-hover: #162038;
+      --border: rgba(99, 179, 237, 0.12);
+      --border-bright: rgba(99, 179, 237, 0.3);
+      --accent: #3ecfff;
+      --accent-dim: rgba(62, 207, 255, 0.15);
+      --accent-glow: rgba(62, 207, 255, 0.4);
+      --gold: #ffd166;
+      --silver: #c0c8d8;
+      --bronze: #cd9b5a;
+      --green: #06d6a0;
+      --red: #ef476f;
+      --text-primary: #e8f0fe;
+      --text-secondary: #7a94c1;
+      --text-muted: #3d5478;
+      --rank-1: linear-gradient(135deg, #ffd700, #ff9500);
+      --rank-2: linear-gradient(135deg, #c0c0c0, #8fa0b5);
+      --rank-3: linear-gradient(135deg, #cd7f32, #8b4513);
+      --radius: 16px;
+      --radius-sm: 8px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      direction: rtl;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(62,207,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(62,207,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow orbs */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(62,207,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* App Container */
+    #app {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .app-header {
+      padding: 20px 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-primary);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
+    .app-header.scrolled { border-color: var(--border); }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .logo-area { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #0066ff);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .logo-text { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .logo-sub { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+
+    .header-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Nav tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 16px;
+    }
+    .nav-tab {
+      flex: 1;
+      padding: 8px 4px;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+    }
+    .nav-tab.active {
+      background: var(--bg-card);
+      color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Content area */
+    .content { padding: 0 16px 100px; }
+
+    /* Screen sections */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Competition info banner */
+    .competition-banner {
+      background: linear-gradient(135deg, rgba(62,207,255,0.08), rgba(0,100,255,0.08));
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .competition-icon { font-size: 28px; }
+    .competition-info { flex: 1; }
+    .competition-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .competition-dates { font-size: 12px; color: var(--text-secondary); }
+
+    /* Countdown */
+    .countdown-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+    .countdown-unit {
+      text-align: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      min-width: 60px;
+    }
+    .countdown-num {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .countdown-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Section header */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 0 2px;
+    }
+    .section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase; }
+    .section-action { font-size: 12px; color: var(--accent); cursor: pointer; }
+
+    /* Leaderboard cards */
+    .leaderboard-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .leader-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .leader-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background: linear-gradient(135deg, var(--accent-dim), transparent);
+      transition: opacity 0.25s;
+    }
+    .leader-card:hover::before { opacity: 1; }
+    .leader-card:hover { border-color: var(--border-bright); transform: translateY(-1px); }
+    .leader-card:active { transform: translateY(0); }
+
+    .leader-card.rank-1 { border-color: rgba(255,215,0,0.3); background: linear-gradient(135deg, rgba(255,215,0,0.05), var(--bg-card)); }
+    .leader-card.rank-2 { border-color: rgba(192,192,192,0.2); }
+    .leader-card.rank-3 { border-color: rgba(205,127,50,0.2); }
+
+    .leader-main { display: flex; align-items: center; gap: 12px; }
+
+    .rank-badge {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .rank-badge.r1 { background: var(--rank-1); color: #fff; box-shadow: 0 0 16px rgba(255,215,0,0.4); }
+    .rank-badge.r2 { background: var(--rank-2); color: #fff; }
+    .rank-badge.r3 { background: var(--rank-3); color: #fff; }
+    .rank-badge.rn { background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; border: 1px solid var(--border); }
+
+    .leader-info { flex: 1; min-width: 0; }
+    .leader-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .leader-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    .leader-return {
+      text-align: left;
+      direction: ltr;
+    }
+    .return-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .return-value.positive { color: var(--green); }
+    .return-value.negative { color: var(--red); }
+    .return-value.neutral { color: var(--text-secondary); }
+    .return-label { font-size: 10px; color: var(--text-muted); margin-top: 3px; text-align: center; }
+
+    /* Progress bar inside card */
+    .leader-progress {
+      margin-top: 12px;
+      height: 4px;
+      background: var(--bg-secondary);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .leader-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s ease;
+    }
+    .leader-progress-fill.positive { background: linear-gradient(90deg, var(--green), rgba(6,214,160,0.4)); }
+    .leader-progress-fill.negative { background: linear-gradient(90deg, var(--red), rgba(239,71,111,0.4)); }
+
+    /* Holdings mini pills */
+    .leader-holdings {
+      display: flex;
+      gap: 4px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .holding-pill {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .holding-pill .weight { color: var(--text-muted); }
+    .holding-pill.hidden-pill { font-style: italic; color: var(--text-muted); font-family: inherit; }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .stat-value { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--text-primary); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+    .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ===== PROFILE SCREEN ===== */
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      margin-bottom: 16px;
+      padding: 8px 0;
+      font-size: 14px;
+      background: none;
+      border: none;
+    }
+    .back-btn:hover { color: var(--accent); }
+
+    .profile-hero {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .profile-rank-badge {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      margin: 0 auto 12px;
+    }
+    .profile-name { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .profile-return-display {
+      font-family: var(--font-mono);
+      font-size: 36px;
+      font-weight: 700;
+      direction: ltr;
+    }
+    .profile-return-display.positive { color: var(--green); }
+    .profile-return-display.negative { color: var(--red); }
+    .profile-return-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .holdings-table {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .holdings-table-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .holding-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 8px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      align-items: center;
+    }
+    .holding-ticker { font-family: var(--font-mono); font-weight: 700; font-size: 14px; }
+    .holding-exchange { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .holding-weight { font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); }
+    .holding-return { font-family: var(--font-mono); font-size: 13px; font-weight: 700; direction: ltr; text-align: left; }
+    .holding-return.positive { color: var(--green); }
+    .holding-return.negative { color: var(--red); }
+    .holding-contribution { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); direction: ltr; text-align: left; }
+
+    .price-detail-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-top: 8px;
+    }
+    .price-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .price-row:last-child { border-bottom: none; }
+    .price-label { font-size: 12px; color: var(--text-secondary); }
+    .price-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; direction: ltr; }
+
+    /* ===== SUBMISSION SCREEN ===== */
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      margin-bottom: 20px;
+    }
+    .auth-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .auth-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block; }
+    .form-input {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: 'Heebo', sans-serif;
+      direction: rtl;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-input.mono { font-family: var(--font-mono); direction: ltr; text-align: left; }
+
+    .otp-inputs { display: flex; gap: 8px; justify-content: center; }
+    .otp-input {
+      width: 48px; height: 56px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-size: 22px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-primary);
+      border: 2px solid var(--border);
+    }
+    .otp-input:focus { outline: none; border-color: var(--accent); }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Heebo', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #0088cc);
+      color: #000;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-danger { background: rgba(239,71,111,0.15); color: var(--red); border: 1px solid rgba(239,71,111,0.3); }
+
+    /* Holdings builder */
+    .holdings-builder { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+    .holding-builder-row {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+    }
+    .holding-builder-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .holding-builder-num { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+    .remove-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+    .remove-btn:hover { background: var(--bg-card); color: var(--red); }
+
+    .holding-inputs-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; }
+    .exchange-select {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: 'Heebo', sans-serif;
+      width: 100%;
+      direction: rtl;
+    }
+    .exchange-select:focus { outline: none; border-color: var(--accent); }
+    .weight-input-wrap { position: relative; }
+    .weight-input-wrap input { padding-left: 24px; }
+    .weight-pct { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none; }
+
+    .weight-sum-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+    .weight-sum-label { font-size: 13px; color: var(--text-secondary); }
+    .weight-sum-value { font-family: var(--font-mono); font-size: 16px; font-weight: 700; }
+    .weight-sum-value.ok { color: var(--green); }
+    .weight-sum-value.error { color: var(--red); }
+    .weight-sum-value.warn { color: var(--gold); }
+
+    .add-holding-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Heebo', sans-serif;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .add-holding-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .validation-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .validation-note.error { background: rgba(239,71,111,0.08); color: var(--red); border: 1px solid rgba(239,71,111,0.2); }
+    .validation-note.success { background: rgba(6,214,160,0.08); color: var(--green); border: 1px solid rgba(6,214,160,0.2); }
+
+    /* ===== ADMIN SCREEN ===== */
+    .admin-login {
+      padding: 20px 0;
+      text-align: center;
+    }
+    .admin-icon { font-size: 48px; margin-bottom: 16px; }
+    .admin-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .admin-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+
+    .admin-section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .admin-action-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .admin-action-card:hover { border-color: var(--accent); }
+    .admin-action-icon { font-size: 24px; margin-bottom: 8px; }
+    .admin-action-label { font-size: 13px; font-weight: 600; }
+    .admin-action-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    .participant-admin-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+    .participant-admin-info { flex: 1; }
+    .participant-admin-name { font-size: 14px; font-weight: 600; }
+    .participant-admin-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .participant-admin-actions { display: flex; gap: 6px; }
+    .mini-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Heebo', sans-serif;
+      transition: all 0.2s;
+    }
+    .mini-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .mini-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+    /* Status chips */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .chip-green { background: rgba(6,214,160,0.12); color: var(--green); }
+    .chip-red { background: rgba(239,71,111,0.12); color: var(--red); }
+    .chip-yellow { background: rgba(255,209,102,0.12); color: var(--gold); }
+    .chip-blue { background: rgba(62,207,255,0.12); color: var(--accent); }
+    .chip::before { content: '●'; font-size: 6px; }
+
+    /* Bottom tab bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: rgba(11, 19, 38, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+    .bottom-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 4px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+    }
+    .bottom-tab.active { background: var(--accent-dim); }
+    .bottom-tab-icon { font-size: 20px; }
+    .bottom-tab-label { font-size: 10px; font-weight: 500; color: var(--text-muted); font-family: 'Heebo', sans-serif; }
+    .bottom-tab.active .bottom-tab-label { color: var(--accent); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      transition: all 0.3s;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+      max-width: 300px;
+      text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(6,214,160,0.4); color: var(--green); }
+    .toast.error { border-color: rgba(239,71,111,0.4); color: var(--red); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 480px;
+      transform: translateY(40px);
+      transition: transform 0.3s;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .modal-close-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-state-text { font-size: 14px; }
+
+    /* Refresh indicator */
+    .refresh-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in { animation: fadeInUp 0.4s ease both; }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.1s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.2s; }
+    .delay-5 { animation-delay: 0.25s; }
+
+    /* Lock banner */
+    .lock-banner {
+      background: linear-gradient(135deg, rgba(255,209,102,0.1), rgba(255,150,0,0.06));
+      border: 1px solid rgba(255,209,102,0.3);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    /* Ticker search */
+    .ticker-search-results {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-top: 4px;
+      overflow: hidden;
+      display: none;
+    }
+    .ticker-result {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .ticker-result:last-child { border-bottom: none; }
+    .ticker-result:hover { background: var(--bg-secondary); }
+    .ticker-result-symbol { font-family: var(--font-mono); font-weight: 700; font-size: 14px; }
+    .ticker-result-name { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .hidden { display: none !important; }
+
+    /* Rule-based competition phase badge */
+    .phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .phase-badge.pre { background: rgba(255,209,102,0.12); color: var(--gold); border: 1px solid rgba(255,209,102,0.3); }
+    .phase-badge.active { background: rgba(6,214,160,0.12); color: var(--green); border: 1px solid rgba(6,214,160,0.3); }
+    .phase-badge.ended { background: rgba(239,71,111,0.12); color: var(--red); border: 1px solid rgba(239,71,111,0.3); }
+    .phase-badge.submission { background: rgba(62,207,255,0.12); color: var(--accent); border: 1px solid rgba(62,207,255,0.3); }
+    .phase-badge::before { content: '●'; font-size: 6px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="app-header" id="appHeader">
+      <div class="header-top">
+        <div class="logo-area">
+          <div class="logo-icon">📈</div>
+          <div>
+            <div class="logo-text">תחרות השקעות</div>
+            <div class="logo-sub">Q2 2026</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="refreshBtn" title="רענן נתונים" onclick="manualRefresh()">⟳</button>
+          <button class="icon-btn" title="שתף לינק" onclick="shareApp()">⬆</button>
+        </div>
+      </div>
+      <nav class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" onclick="showScreen('leaderboard')" data-screen="leaderboard">🏆 לידרבורד</button>
+        <button class="nav-tab" onclick="showScreen('submit')" data-screen="submit">📝 הגשה</button>
+        <button class="nav-tab" onclick="showScreen('admin')" data-screen="admin">⚙ אדמין</button>
+      </nav>
+    </header>
+
+    <main class="content" id="mainContent">
+      
+      <!-- ===== LEADERBOARD SCREEN ===== -->
+      <section class="screen active" id="screen-leaderboard">
+        
+        <div id="phaseBadge" class="phase-badge submission">
+          <span id="phaseText">הגשות פתוחות</span>
+        </div>
+
+        <!-- Competition Banner -->
+        <div class="competition-banner animate-in">
+          <div class="competition-icon">🎯</div>
+          <div class="competition-info">
+            <div class="competition-title">תחרות תיק השקעות Q2 2026</div>
+            <div class="competition-dates">
+              הגשה עד: 30/03/2026 22:00 | תחרות: 01/04 – 30/06/2026
+            </div>
+          </div>
+        </div>
+
+        <!-- Countdown -->
+        <div class="countdown-bar animate-in delay-1" id="countdown">
+          <div class="countdown-unit">
+            <div class="countdown-num" id="cdDays">--</div>
+            <div class="countdown-label">ימים</div>
+          </div>
+          <div class="countdown-unit">
+            <div class="countdown-num" id="cdHours">--</div>
+            <div class="countdown-label">שעות</div>
+          </div>
+          <div class="countdown-unit">
+            <div class="countdown-num" id="cdMins">--</div>
+            <div class="countdown-label">דקות</div>
+          </div>
+          <div class="countdown-unit">
+            <div class="countdown-num" id="cdSecs">--</div>
+            <div class="countdown-label">שניות</div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row animate-in delay-2">
+          <div class="stat-card">
+            <div class="stat-value" id="statParticipants">8</div>
+            <div class="stat-label">משתתפים</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value green" id="statBest">+18.4%</div>
+            <div class="stat-label">הטוב ביותר</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value red" id="statWorst">-4.2%</div>
+            <div class="stat-label">הגרוע ביותר</div>
+          </div>
+        </div>
+
+        <div class="refresh-row">
+          <span id="refreshSpinner"></span>
+          <span id="lastUpdateText">עודכן לאחרונה: לפני 12 דקות</span>
+        </div>
+
+        <!-- Leaderboard list -->
+        <div class="section-header">
+          <span class="section-title">דירוג משתתפים</span>
+          <span class="section-action" onclick="toggleSortMode()">מיון: תשואה ↓</span>
+        </div>
+
+        <div class="leaderboard-list animate-in delay-3" id="leaderboardList">
+          <!-- Populated by JS -->
+        </div>
+
+      </section>
+
+      <!-- ===== PROFILE SCREEN ===== -->
+      <section class="screen" id="screen-profile">
+        <button class="back-btn" onclick="showScreen('leaderboard')">← חזרה ללידרבורד</button>
+        <div id="profileContent"></div>
+      </section>
+
+      <!-- ===== SUBMIT SCREEN ===== -->
+      <section class="screen" id="screen-submit">
+        <div id="submitContent">
+          <!-- State 0: Auth -->
+          <div id="authStep">
+            <div class="auth-card animate-in">
+              <div class="auth-title">התחברות משתתף</div>
+              <div class="auth-desc">הכנס את כתובת המייל שלך לקבלת קוד אימות חד-פעמי (OTP)</div>
+              <div class="form-group">
+                <label class="form-label">כתובת מייל</label>
+                <input class="form-input" type="email" id="authEmail" placeholder="your@email.com" dir="ltr">
+              </div>
+              <div class="form-group">
+                <label class="form-label">שם תצוגה</label>
+                <input class="form-input" type="text" id="authName" placeholder="השם שיוצג בלידרבורד">
+              </div>
+              <button class="btn btn-primary" onclick="sendOTP()">שלח קוד אימות →</button>
+            </div>
+          </div>
+
+          <!-- State 1: OTP -->
+          <div id="otpStep" class="hidden">
+            <div class="auth-card animate-in">
+              <div class="auth-title">אימות קוד</div>
+              <div class="auth-desc" id="otpDesc">הזן את הקוד שנשלח ל-</div>
+              <div class="form-group">
+                <div class="otp-inputs">
+                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 1)">
+                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 2)">
+                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 3)">
+                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 4)">
+                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 5)">
+                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 6)">
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="verifyOTP()">אמת קוד →</button>
+              <br><br>
+              <button class="btn btn-secondary" onclick="backToAuth()">← חזרה</button>
+            </div>
+          </div>
+
+          <!-- State 2: Portfolio Builder -->
+          <div id="portfolioStep" class="hidden">
+
+            <div id="lockedBanner" class="lock-banner hidden">
+              🔒 <strong>ההגשה נעולה</strong> — לא ניתן לשנות את הבחירות לאחר 30/03/2026 22:00
+            </div>
+
+            <div class="auth-card animate-in">
+              <div class="auth-title">בניית תיק השקעות</div>
+              <div class="auth-desc">בחר 2–5 ניירות ערך ופצל את ההשקעה (סה"כ 100%, מקסימום 60% לנייר)</div>
+
+              <div class="holdings-builder" id="holdingsBuilder">
+                <!-- rows populated by JS -->
+              </div>
+
+              <button class="add-holding-btn" id="addHoldingBtn" onclick="addHolding()">
+                + הוסף נייר ערך
+              </button>
+
+              <br>
+              <div class="weight-sum-row">
+                <span class="weight-sum-label">סכום משקלים:</span>
+                <span class="weight-sum-value" id="weightSumDisplay">0%</span>
+              </div>
+
+              <div class="validation-note" id="validationNote">הזן לפחות 2 ניירות ערך עם סכום משקלים של 100%</div>
+
+              <button class="btn btn-secondary" style="margin-bottom:10px" onclick="setEqualWeights()">⚖ חלוקה שווה אוטומטית</button>
+              <button class="btn btn-primary" id="submitBtn" onclick="submitPortfolio()">הגש תיק ✓</button>
+              <br><br>
+              <button class="btn btn-secondary" onclick="logoutUser()">התנתק</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADMIN SCREEN ===== -->
+      <section class="screen" id="screen-admin">
+        <!-- Admin login -->
+        <div id="adminLogin" class="animate-in">
+          <div class="admin-login">
+            <div class="admin-icon">🔐</div>
+            <div class="admin-title">כניסת מנהל</div>
+            <div class="admin-desc">הכנס סיסמת מנהל לגישה לפאנל הניהול</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">סיסמת מנהל</label>
+            <input class="form-input" type="password" id="adminPassword" placeholder="הכנס סיסמה" onkeydown="if(event.key==='Enter') adminLogin()">
+          </div>
+          <button class="btn btn-primary" onclick="adminLogin()">כניסה →</button>
+        </div>
+
+        <!-- Admin panel -->
+        <div id="adminPanel" class="hidden animate-in">
+          <div class="admin-section-title">⚙ פאנל ניהול <button onclick="logoutAdmin()" style="margin-right:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;">יציאה</button></div>
+
+          <!-- Quick actions -->
+          <div class="admin-grid">
+            <div class="admin-action-card" onclick="adminRefreshNow()">
+              <div class="admin-action-icon">🔄</div>
+              <div class="admin-action-label">רענן עכשיו</div>
+              <div class="admin-action-desc">עדכן מחירים</div>
+            </div>
+            <div class="admin-action-card" onclick="adminToggleLock()">
+              <div class="admin-action-icon" id="adminLockIcon">🔒</div>
+              <div class="admin-action-label" id="adminLockLabel">נעל הגשות</div>
+              <div class="admin-action-desc">שנה סטטוס</div>
+            </div>
+            <div class="admin-action-card" onclick="adminAddParticipant()">
+              <div class="admin-action-icon">👤</div>
+              <div class="admin-action-label">הוסף משתתף</div>
+              <div class="admin-action-desc">מנהל ידני</div>
+            </div>
+            <div class="admin-action-card" onclick="adminExportData()">
+              <div class="admin-action-icon">📊</div>
+              <div class="admin-action-label">ייצוא נתונים</div>
+              <div class="admin-action-desc">CSV / JSON</div>
+            </div>
+          </div>
+
+          <!-- Participants list -->
+          <div class="section-header">
+            <span class="section-title">משתתפים</span>
+          </div>
+          <div id="adminParticipantsList"></div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom bar -->
+    <nav class="bottom-bar">
+      <button class="bottom-tab active" data-screen="leaderboard" onclick="showScreen('leaderboard')">
+        <span class="bottom-tab-icon">🏆</span>
+        <span class="bottom-tab-label">לידרבורד</span>
+      </button>
+      <button class="bottom-tab" data-screen="submit" onclick="showScreen('submit')">
+        <span class="bottom-tab-icon">📝</span>
+        <span class="bottom-tab-label">הגשה</span>
+      </button>
+      <button class="bottom-tab" data-screen="admin" onclick="showScreen('admin')">
+        <span class="bottom-tab-icon">⚙</span>
+        <span class="bottom-tab-label">אדמין</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Modal overlay for editing -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modalContent">
+      <div class="modal-close-row">
+        <button class="icon-btn" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ======== SUPABASE ========
+    const SUPABASE_URL = 'https://hjfxwbaobihpnqudidlj.supabase.co'
+    const SUPABASE_KEY = 'sb_publishable_A8MU4BdpWqV8ZbrWovVOwQ_UhL_9sdZ'
+
+    // טוען את ספריית Supabase
+    async function initSupabase() {
+      if (window._supabase) return window._supabase
+      return new Promise((resolve) => {
+        const script = document.createElement('script')
+        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'
+        script.onload = () => {
+          window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+          resolve(window._supabase)
+        }
+        document.head.appendChild(script)
+      })
+    }
+
+    // שולף לידרבורד אמיתי מ-Supabase
+    async function fetchLeaderboardFromDB() {
+      try {
+        const sb = await initSupabase()
+        const { data, error } = await sb
+          .from('submissions')
+          .select(`
+            id,
+            portfolio_return,
+            last_computed_at,
+            profiles (display_name, email),
+            submission_items (ticker, exchange, weight, current_price, asset_return, weighted_contribution)
+          `)
+          .order('portfolio_return', { ascending: false, nullsFirst: false })
+
+        if (error) throw error
+        if (!data || data.length === 0) return null
+
+        // המרה לפורמט של האפליקציה
+        return data.map((sub, idx) => ({
+          id: sub.id,
+          name: sub.profiles?.display_name || 'משתתף',
+          email: sub.profiles?.email || '',
+          submitted: true,
+          portfolioReturn: sub.portfolio_return ? parseFloat(sub.portfolio_return) : null,
+          holdings: (sub.submission_items || []).map(item => ({
+            ticker: item.ticker,
+            exchange: item.exchange,
+            weight: parseFloat(item.weight),
+            assetReturn: item.asset_return ? parseFloat(item.asset_return) : 0,
+            contribution: item.weighted_contribution ? parseFloat(item.weighted_contribution) : 0,
+            startPrice: 0,
+            lastPrice: item.current_price ? parseFloat(item.current_price) : 0
+          })),
+          lastUpdate: sub.last_computed_at
+            ? new Date(sub.last_computed_at).toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'})
+            : '—'
+        }))
+      } catch (err) {
+        console.error('Supabase error:', err)
+        return null // נפול חזרה לנתוני דמו
+      }
+    }
+
+    // ======== STATE ========
+    const STATE = {
+      isLocked: false,  // submission locked after deadline
+      isCompetitionActive: false,
+      isCompetitionEnded: false,
+      isAdmin: false,
+      currentUser: null,
+      lastRefresh: null,
+      refreshInterval: null,
+      holdings: [{ ticker: '', exchange: 'AUTO', weight: '' }, { ticker: '', exchange: 'AUTO', weight: '' }]
+    };
+
+    // Competition dates
+    const DATES = {
+      submissionDeadline: new Date('2026-03-30T22:00:00+03:00'),
+      competitionStart:   new Date('2026-04-01T00:00:00+03:00'),
+      competitionEnd:     new Date('2026-06-30T23:59:59+03:00'),
+    };
+
+    // Mock data — replace with Supabase calls
+    const MOCK_PARTICIPANTS = [
+      {
+        id: 1, name: 'אביגיל כהן', email: 'a@x.com',
+        submitted: true,
+        portfolioReturn: 18.41,
+        holdings: [
+          { ticker: 'NVDA', exchange: 'NASDAQ', weight: 40, assetReturn: 38.2, contribution: 15.28, startPrice: 875.40, lastPrice: 1209.80 },
+          { ticker: 'TSLA', exchange: 'NASDAQ', weight: 30, assetReturn: 12.1, contribution: 3.63, startPrice: 258.00, lastPrice: 289.25 },
+          { ticker: 'TEVA', exchange: 'TASE', weight: 30, assetReturn: -1.5, contribution: -0.45, startPrice: 52.40, lastPrice: 51.62 },
+        ],
+        lastUpdate: '13:45',
+      },
+      {
+        id: 2, name: 'דוד לוי', email: 'b@x.com',
+        submitted: true,
+        portfolioReturn: 12.87,
+        holdings: [
+          { ticker: 'AAPL', exchange: 'NASDAQ', weight: 50, assetReturn: 15.2, contribution: 7.60, startPrice: 221.00, lastPrice: 254.60 },
+          { ticker: 'MSFT', exchange: 'NASDAQ', weight: 30, assetReturn: 11.4, contribution: 3.42, startPrice: 415.00, lastPrice: 462.40 },
+          { ticker: 'SPY',  exchange: 'NYSE',   weight: 20, assetReturn: 9.25, contribution: 1.85, startPrice: 528.00, lastPrice: 576.80 },
+        ],
+        lastUpdate: '13:45',
+      },
+      {
+        id: 3, name: 'מרים אברהם', email: 'c@x.com',
+        submitted: true,
+        portfolioReturn: 9.12,
+        holdings: [
+          { ticker: 'PLTR', exchange: 'NYSE',   weight: 60, assetReturn: 12.8, contribution: 7.68, startPrice: 24.20, lastPrice: 27.30 },
+          { ticker: 'GOOGL',exchange: 'NASDAQ', weight: 40, assetReturn: 3.6,  contribution: 1.44, startPrice: 178.00, lastPrice: 184.40 },
+        ],
+        lastUpdate: '13:45',
+      },
+      {
+        id: 4, name: 'יוסי גולן', email: 'd@x.com',
+        submitted: true,
+        portfolioReturn: 5.33,
+        holdings: [
+          { ticker: 'WIX',  exchange: 'NASDAQ', weight: 50, assetReturn: 8.2, contribution: 4.10, startPrice: 185.00, lastPrice: 200.20 },
+          { ticker: 'NICE', exchange: 'NASDAQ', weight: 30, assetReturn: 2.1, contribution: 0.63, startPrice: 195.00, lastPrice: 199.10 },
+          { ticker: 'CEVA', exchange: 'NASDAQ', weight: 20, assetReturn: 3.0, contribution: 0.60, startPrice: 22.50, lastPrice: 23.18 },
+        ],
+        lastUpdate: '13:45',
+      },
+      {
+        id: 5, name: 'רחל ברנשטיין', email: 'e@x.com',
+        submitted: true,
+        portfolioReturn: 2.14,
+        holdings: [
+          { ticker: 'QQQ', exchange: 'NASDAQ', weight: 60, assetReturn: 1.5, contribution: 0.90, startPrice: 445.00, lastPrice: 451.70 },
+          { ticker: 'GLD', exchange: 'NYSE',   weight: 40, assetReturn: 3.1, contribution: 1.24, startPrice: 218.00, lastPrice: 224.80 },
+        ],
+        lastUpdate: '13:45',
+      },
+      {
+        id: 6, name: 'נתן פרידמן', email: 'f@x.com',
+        submitted: true,
+        portfolioReturn: -0.88,
+        holdings: [
+          { ticker: 'BABA', exchange: 'NYSE',   weight: 50, assetReturn: -2.4, contribution: -1.20, startPrice: 82.00, lastPrice: 80.03 },
+          { ticker: 'NIO',  exchange: 'NYSE',   weight: 30, assetReturn: -1.5, contribution: -0.45, startPrice: 5.80, lastPrice: 5.71 },
+          { ticker: 'KWEB', exchange: 'NYSE',   weight: 20, assetReturn: 3.85, contribution: 0.77, startPrice: 31.00, lastPrice: 32.19 },
+        ],
+        lastUpdate: '13:45',
+      },
+      {
+        id: 7, name: 'שרה יצחק', email: 'g@x.com',
+        submitted: true,
+        portfolioReturn: -3.55,
+        holdings: [
+          { ticker: 'HOOD', exchange: 'NASDAQ', weight: 60, assetReturn: -6.2, contribution: -3.72, startPrice: 21.00, lastPrice: 19.70 },
+          { ticker: 'SOFI', exchange: 'NASDAQ', weight: 40, assetReturn: 0.43, contribution: 0.17, startPrice: 12.40, lastPrice: 12.45 },
+        ],
+        lastUpdate: '13:45',
+      },
+      {
+        id: 8, name: 'בני שפירא', email: 'h@x.com',
+        submitted: false,
+        portfolioReturn: null,
+        holdings: [],
+        lastUpdate: null,
+      },
+    ];
+
+    // ======== PHASE LOGIC ========
+    function updatePhase() {
+      const now = new Date();
+      const phase = document.getElementById('phaseBadge');
+      const phaseText = document.getElementById('phaseText');
+
+      if (now < DATES.submissionDeadline) {
+        STATE.isLocked = false;
+        STATE.isCompetitionActive = false;
+        phase.className = 'phase-badge submission';
+        phaseText.textContent = 'הגשות פתוחות';
+      } else if (now < DATES.competitionStart) {
+        STATE.isLocked = true;
+        STATE.isCompetitionActive = false;
+        phase.className = 'phase-badge pre';
+        phaseText.textContent = '🔒 הגשות נעולות — לפני תחרות';
+      } else if (now <= DATES.competitionEnd) {
+        STATE.isLocked = true;
+        STATE.isCompetitionActive = true;
+        phase.className = 'phase-badge active';
+        phaseText.textContent = '● תחרות פעילה';
+      } else {
+        STATE.isLocked = true;
+        STATE.isCompetitionActive = false;
+        STATE.isCompetitionEnded = true;
+        phase.className = 'phase-badge ended';
+        phaseText.textContent = 'תחרות הסתיימה';
+      }
+    }
+
+    // ======== COUNTDOWN ========
+    function updateCountdown() {
+      const now = new Date();
+      let target;
+      let label;
+
+      if (now < DATES.submissionDeadline) {
+        target = DATES.submissionDeadline;
+      } else if (now < DATES.competitionStart) {
+        target = DATES.competitionStart;
+      } else if (now < DATES.competitionEnd) {
+        target = DATES.competitionEnd;
+      } else {
+        document.getElementById('countdown').innerHTML = '<div style="font-size:14px;color:var(--text-muted);padding:12px">התחרות הסתיימה</div>';
+        return;
+      }
+
+      const diff = target - now;
+      const days    = Math.floor(diff / 86400000);
+      const hours   = Math.floor((diff % 86400000) / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+
+      document.getElementById('cdDays').textContent  = String(days).padStart(2,'0');
+      document.getElementById('cdHours').textContent = String(hours).padStart(2,'0');
+      document.getElementById('cdMins').textContent  = String(minutes).padStart(2,'0');
+      document.getElementById('cdSecs').textContent  = String(seconds).padStart(2,'0');
+    }
+
+    // ======== LEADERBOARD ========
+    async function renderLeaderboard() {
+      updatePhase();
+      const liveData = await fetchLeaderboardFromDB()
+      const sourceData = (liveData && liveData.length > 0) ? liveData : MOCK_PARTICIPANTS
+      const sorted = [...sourceData]
+        .sort((a,b) => {
+          if (a.portfolioReturn === null && b.portfolioReturn === null) return 0;
+          if (a.portfolioReturn === null) return 1;
+          if (b.portfolioReturn === null) return -1;
+          return b.portfolioReturn - a.portfolioReturn;
+        });
+
+      const best  = sorted.find(p => p.portfolioReturn !== null)?.portfolioReturn || 0;
+      const worst = sorted.filter(p => p.portfolioReturn !== null).slice(-1)[0]?.portfolioReturn || 0;
+      const submitted = sorted.filter(p => p.submitted).length;
+
+      document.getElementById('statParticipants').textContent = submitted;
+      document.getElementById('statBest').textContent  = formatReturn(best);
+      document.getElementById('statWorst').textContent = formatReturn(worst);
+
+      const list = document.getElementById('leaderboardList');
+      const isLocked = STATE.isLocked || STATE.isAdmin;
+
+      list.innerHTML = sorted.map((p, idx) => {
+        const rank = idx + 1;
+        const rankClass = rank <= 3 ? `rank-${rank}` : '';
+        const badgeClass = rank <= 3 ? `r${rank}` : 'rn';
+        const ret = p.portfolioReturn;
+        const retClass = ret === null ? 'neutral' : ret > 0 ? 'positive' : ret < 0 ? 'negative' : 'neutral';
+        const retStr = ret === null ? '—' : formatReturn(ret);
+        const maxAbs = Math.max(Math.abs(best), Math.abs(worst), 1);
+        const barWidth = ret !== null ? Math.abs(ret) / maxAbs * 100 : 0;
+
+        // Holdings display
+        let holdingsPills = '';
+        if (!p.submitted) {
+          holdingsPills = '<div class="leader-holdings"><span class="holding-pill hidden-pill">לא הגיש</span></div>';
+        } else if (!isLocked && STATE.currentUser?.id !== p.id) {
+          holdingsPills = '<div class="leader-holdings"><span class="holding-pill hidden-pill">🔒 לפני נעילה</span></div>';
+        } else {
+          holdingsPills = '<div class="leader-holdings">' + p.holdings.map(h =>
+            `<span class="holding-pill">${h.ticker} <span class="weight">${h.weight}%</span></span>`
+          ).join('') + '</div>';
+        }
+
+        return `
+          <div class="leader-card ${rankClass} animate-in delay-${Math.min(rank,5)}" onclick="showProfile(${p.id})">
+            <div class="leader-main">
+              <div class="rank-badge ${badgeClass}">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</div>
+              <div class="leader-info">
+                <div class="leader-name">${p.name}</div>
+                <div class="leader-meta">${p.submitted ? `עודכן: ${p.lastUpdate || '—'}` : 'טרם הגיש'}</div>
+              </div>
+              <div class="leader-return">
+                <div class="return-value ${retClass}">${retStr}</div>
+                <div class="return-label">תשואה</div>
+              </div>
+            </div>
+            ${holdingsPills}
+            ${ret !== null ? `<div class="leader-progress"><div class="leader-progress-fill ${ret>=0?'positive':'negative'}" style="width:${barWidth}%"></div></div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('lastUpdateText').textContent = 'עודכן: ' + new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+    }
+
+    function formatReturn(val) {
+      if (val === null) return '—';
+      const sign = val >= 0 ? '+' : '';
+      return sign + val.toFixed(2) + '%';
+    }
+
+    // ======== PROFILE ========
+    function showProfile(id) {
+      const p = MOCK_PARTICIPANTS.find(x => x.id === id);
+      if (!p) return;
+
+      showScreen('profile');
+
+      const isVisible = STATE.isLocked || STATE.isAdmin || STATE.currentUser?.id === id;
+      const ret = p.portfolioReturn;
+      const retClass = ret === null ? 'neutral' : ret > 0 ? 'positive' : ret < 0 ? 'negative' : 'neutral';
+      const rank = [...MOCK_PARTICIPANTS].sort((a,b)=>(b.portfolioReturn||0)-(a.portfolioReturn||0)).findIndex(x=>x.id===id)+1;
+      const rankBadgeClass = rank <=3 ? `r${rank}` : 'rn';
+
+      let holdingsHTML = '';
+      if (!p.submitted) {
+        holdingsHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">המשתתף טרם הגיש תיק</div></div>';
+      } else if (!isVisible) {
+        holdingsHTML = '<div class="empty-state"><div class="empty-state-icon">🔒</div><div class="empty-state-text">הבחירות יוצגו לאחר נעילת ההגשות ב-30/03/2026</div></div>';
+      } else {
+        holdingsHTML = `
+          <div class="holdings-table">
+            <div class="holdings-table-header">
+              <div>נייר</div>
+              <div>משקל</div>
+              <div>תשואה</div>
+              <div>תרומה</div>
+            </div>
+            ${p.holdings.map(h => `
+              <div class="holding-row">
+                <div>
+                  <div class="holding-ticker">${h.ticker}</div>
+                  <div class="holding-exchange">${h.exchange}</div>
+                </div>
+                <div class="holding-weight">${h.weight}%</div>
+                <div class="holding-return ${h.assetReturn >= 0 ? 'positive' : 'negative'}">${formatReturn(h.assetReturn)}</div>
+                <div class="holding-contribution ${h.contribution >= 0 ? 'positive' : 'negative'}">${formatReturn(h.contribution)}</div>
+              </div>
+            `).join('')}
+          </div>
+          ${p.holdings.map(h => `
+            <div class="price-detail-card">
+              <div style="font-size:13px;font-weight:700;margin-bottom:8px;font-family:var(--font-mono)">${h.ticker} — ${h.exchange}</div>
+              <div class="price-row">
+                <span class="price-label">מחיר פתיחה (01/04/2026)</span>
+                <span class="price-val">$${h.startPrice.toFixed(2)}</span>
+              </div>
+              <div class="price-row">
+                <span class="price-label">מחיר נוכחי</span>
+                <span class="price-val" style="color:var(--accent)">$${h.lastPrice.toFixed(2)}</span>
+              </div>
+              <div class="price-row">
+                <span class="price-label">סוג מחיר</span>
+                <span class="chip chip-blue">Regular Session</span>
+              </div>
+            </div>
+          `).join('')}
+        `;
+      }
+
+      document.getElementById('profileContent').innerHTML = `
+        <div class="profile-hero animate-in">
+          <div class="rank-badge profile-rank-badge ${rankBadgeClass}" style="width:56px;height:56px;font-size:22px;margin:0 auto 12px">
+            ${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : '#'+rank}
+          </div>
+          <div class="profile-name">${p.name}</div>
+          <div class="profile-return-display ${retClass}">${ret !== null ? formatReturn(ret) : '—'}</div>
+          <div class="profile-return-label">תשואת תיק</div>
+          <br>
+          <span class="chip ${p.submitted ? 'chip-green' : 'chip-yellow'}">${p.submitted ? 'הגיש' : 'טרם הגיש'}</span>
+        </div>
+        <div class="animate-in delay-2">${holdingsHTML}</div>
+      `;
+    }
+
+    // ======== SUBMIT / AUTH ========
+    function sendOTP() {
+      const email = document.getElementById('authEmail').value.trim();
+      const name = document.getElementById('authName').value.trim();
+      if (!email || !email.includes('@')) { showToast('הכנס כתובת מייל תקינה', 'error'); return; }
+      if (!name) { showToast('הכנס שם תצוגה', 'error'); return; }
+
+      // Simulate sending OTP
+      document.getElementById('otpDesc').textContent = `הזן את הקוד שנשלח ל-${email}`;
+      document.getElementById('authStep').classList.add('hidden');
+      document.getElementById('otpStep').classList.remove('hidden');
+      showToast('קוד נשלח למייל! (דמו: 123456)', 'success');
+    }
+
+    function otpInput(input, pos) {
+      if (input.value.length === 1 && pos < 6) {
+        input.parentElement.children[pos].focus();
+      }
+    }
+
+    function verifyOTP() {
+      const inputs = document.querySelectorAll('.otp-input');
+      const code = [...inputs].map(i=>i.value).join('');
+      if (code.length < 6) { showToast('הכנס קוד 6 ספרות', 'error'); return; }
+
+      // Simulate verification (demo: any 6-digit code works)
+      const name = document.getElementById('authName').value.trim();
+      STATE.currentUser = { id: 99, name, email: document.getElementById('authEmail').value };
+
+      document.getElementById('otpStep').classList.add('hidden');
+      document.getElementById('portfolioStep').classList.remove('hidden');
+      renderPortfolioBuilder();
+      showToast('מחובר בהצלחה! 👋', 'success');
+    }
+
+    function backToAuth() {
+      document.getElementById('otpStep').classList.add('hidden');
+      document.getElementById('authStep').classList.remove('hidden');
+    }
+
+    function logoutUser() {
+      STATE.currentUser = null;
+      document.getElementById('portfolioStep').classList.add('hidden');
+      document.getElementById('authStep').classList.remove('hidden');
+      STATE.holdings = [{ ticker: '', exchange: 'AUTO', weight: '' }, { ticker: '', exchange: 'AUTO', weight: '' }];
+      showToast('התנתקת בהצלחה');
+    }
+
+    // ======== PORTFOLIO BUILDER ========
+    const KNOWN_TICKERS = [
+      { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ' },
+      { symbol: 'MSFT', name: 'Microsoft Corp.', exchange: 'NASDAQ' },
+      { symbol: 'NVDA', name: 'NVIDIA Corp.', exchange: 'NASDAQ' },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ' },
+      { symbol: 'TSLA', name: 'Tesla Inc.', exchange: 'NASDAQ' },
+      { symbol: 'AMZN', name: 'Amazon.com Inc.', exchange: 'NASDAQ' },
+      { symbol: 'META', name: 'Meta Platforms', exchange: 'NASDAQ' },
+      { symbol: 'PLTR', name: 'Palantir Technologies', exchange: 'NYSE' },
+      { symbol: 'SPY', name: 'SPDR S&P 500 ETF', exchange: 'NYSE' },
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust', exchange: 'NASDAQ' },
+      { symbol: 'GLD', name: 'SPDR Gold Shares', exchange: 'NYSE' },
+      { symbol: 'BABA', name: 'Alibaba Group', exchange: 'NYSE' },
+      { symbol: 'WIX', name: 'Wix.com Ltd.', exchange: 'NASDAQ' },
+      { symbol: 'TEVA', name: 'Teva Pharmaceutical', exchange: 'TASE' },
+      { symbol: 'NICE', name: 'NICE Systems', exchange: 'NASDAQ' },
+      { symbol: 'CEVA', name: 'CEVA Inc.', exchange: 'NASDAQ' },
+      { symbol: 'HOOD', name: 'Robinhood Markets', exchange: 'NASDAQ' },
+      { symbol: 'SOFI', name: 'SoFi Technologies', exchange: 'NASDAQ' },
+    ];
+
+    function renderPortfolioBuilder() {
+      const isLocked = STATE.isLocked && !STATE.isAdmin;
+      if (isLocked) document.getElementById('lockedBanner').classList.remove('hidden');
+
+      const builder = document.getElementById('holdingsBuilder');
+      builder.innerHTML = STATE.holdings.map((h, i) => `
+        <div class="holding-builder-row" id="holdingRow${i}">
+          <div class="holding-builder-header">
+            <span class="holding-builder-num">נייר ${i+1}</span>
+            ${STATE.holdings.length > 2 ? `<button class="remove-btn" onclick="removeHolding(${i})" ${isLocked?'disabled':''}>✕</button>` : ''}
+          </div>
+          <div class="holding-inputs-grid">
+            <div>
+              <input class="form-input mono" placeholder="טיקר (AAPL, TEVA...)" value="${h.ticker}"
+                oninput="updateHolding(${i},'ticker',this.value);searchTicker(${i},this.value)"
+                ${isLocked?'disabled':''} style="font-size:13px;padding:10px 12px" id="tickerInput${i}">
+              <div class="ticker-search-results" id="tickerSearch${i}"></div>
+            </div>
+            <select class="exchange-select" onchange="updateHolding(${i},'exchange',this.value)" ${isLocked?'disabled':''}>
+              <option value="AUTO" ${h.exchange==='AUTO'?'selected':''}>אוטו</option>
+              <option value="NASDAQ" ${h.exchange==='NASDAQ'?'selected':''}>NASDAQ</option>
+              <option value="NYSE" ${h.exchange==='NYSE'?'selected':''}>NYSE</option>
+              <option value="TASE" ${h.exchange==='TASE'?'selected':''}>TASE</option>
+            </select>
+            <div class="weight-input-wrap">
+              <input class="form-input mono" type="number" min="0" max="60" placeholder="משקל" value="${h.weight}"
+                oninput="updateHolding(${i},'weight',this.value);updateWeightSum()"
+                ${isLocked?'disabled':''} style="font-size:13px;padding:10px 12px;padding-left:24px">
+              <span class="weight-pct">%</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('addHoldingBtn').style.display = STATE.holdings.length >= 5 || isLocked ? 'none' : 'flex';
+      updateWeightSum();
+    }
+
+    function updateHolding(i, field, val) {
+      STATE.holdings[i][field] = val;
+      if (field === 'weight') updateWeightSum();
+    }
+
+    function addHolding() {
+      if (STATE.holdings.length >= 5) return;
+      STATE.holdings.push({ ticker: '', exchange: 'AUTO', weight: '' });
+      renderPortfolioBuilder();
+    }
+
+    function removeHolding(i) {
+      if (STATE.holdings.length <= 2) return;
+      STATE.holdings.splice(i, 1);
+      renderPortfolioBuilder();
+    }
+
+    function setEqualWeights() {
+      const equal = Math.floor(100 / STATE.holdings.length);
+      const remainder = 100 - (equal * STATE.holdings.length);
+      STATE.holdings.forEach((h, i) => h.weight = equal + (i === 0 ? remainder : 0));
+      renderPortfolioBuilder();
+    }
+
+    function updateWeightSum() {
+      const sum = STATE.holdings.reduce((acc, h) => acc + (parseFloat(h.weight) || 0), 0);
+      const el = document.getElementById('weightSumDisplay');
+      el.textContent = sum.toFixed(1) + '%';
+      el.className = 'weight-sum-value ' + (Math.abs(sum - 100) < 0.01 ? 'ok' : sum > 100 ? 'error' : 'warn');
+      validatePortfolio();
+    }
+
+    function validatePortfolio() {
+      const errors = [];
+      const sum = STATE.holdings.reduce((acc, h) => acc + (parseFloat(h.weight) || 0), 0);
+      const filled = STATE.holdings.filter(h => h.ticker.trim());
+      
+      if (filled.length < 2) errors.push('נדרשים לפחות 2 ניירות ערך');
+      if (filled.length > 5) errors.push('מקסימום 5 ניירות ערך');
+      if (Math.abs(sum - 100) > 0.01) errors.push(`סכום משקלים: ${sum.toFixed(1)}% (נדרש 100%)`);
+      STATE.holdings.forEach(h => {
+        if (parseFloat(h.weight) > 60) errors.push(`${h.ticker}: משקל מעל 60%`);
+      });
+
+      const note = document.getElementById('validationNote');
+      if (errors.length === 0) {
+        note.className = 'validation-note success';
+        note.textContent = '✓ התיק תקין להגשה';
+      } else {
+        note.className = 'validation-note error';
+        note.textContent = errors[0];
+      }
+      return errors.length === 0;
+    }
+
+    function submitPortfolio() {
+      if (!validatePortfolio()) { showToast('תקן שגיאות לפני הגשה', 'error'); return; }
+      if (STATE.isLocked && !STATE.isAdmin) { showToast('ההגשות נעולות', 'error'); return; }
+
+      // Simulate submission
+      showToast('התיק הוגש בהצלחה! ✓', 'success');
+      setTimeout(() => showScreen('leaderboard'), 1500);
+    }
+
+    // ======== TICKER SEARCH ========
+    function searchTicker(rowIdx, val) {
+      const resultsEl = document.getElementById(`tickerSearch${rowIdx}`);
+      if (!val || val.length < 1) { resultsEl.style.display = 'none'; return; }
+      
+      const matches = KNOWN_TICKERS.filter(t => 
+        t.symbol.toUpperCase().startsWith(val.toUpperCase()) ||
+        t.name.toLowerCase().includes(val.toLowerCase())
+      ).slice(0, 4);
+
+      if (matches.length === 0) { resultsEl.style.display = 'none'; return; }
+
+      resultsEl.style.display = 'block';
+      resultsEl.innerHTML = matches.map(t => `
+        <div class="ticker-result" onclick="selectTicker(${rowIdx},'${t.symbol}','${t.exchange}')">
+          <div class="ticker-result-symbol">${t.symbol} <span style="font-size:11px;color:var(--text-muted);font-family:inherit"> — ${t.exchange}</span></div>
+          <div class="ticker-result-name">${t.name}</div>
+        </div>
+      `).join('');
+    }
+
+    function selectTicker(rowIdx, symbol, exchange) {
+      STATE.holdings[rowIdx].ticker = symbol;
+      STATE.holdings[rowIdx].exchange = exchange;
+      document.getElementById(`tickerInput${rowIdx}`).value = symbol;
+      document.getElementById(`tickerSearch${rowIdx}`).style.display = 'none';
+    }
+
+    // ======== ADMIN ========
+    function adminLogin() {
+      const pw = document.getElementById('adminPassword').value;
+      // Demo password: "admin2026"
+      if (pw === 'admin2026') {
+        STATE.isAdmin = true;
+        document.getElementById('adminLogin').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        renderAdminPanel();
+        showToast('כניסת מנהל בהצלחה', 'success');
+      } else {
+        showToast('סיסמה שגויה', 'error');
+      }
+    }
+
+    function logoutAdmin() {
+      STATE.isAdmin = false;
+      document.getElementById('adminLogin').classList.remove('hidden');
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('adminPassword').value = '';
+    }
+
+    function renderAdminPanel() {
+      const icon = STATE.isLocked ? '🔓' : '🔒';
+      const label = STATE.isLocked ? 'בטל נעילה' : 'נעל הגשות';
+      document.getElementById('adminLockIcon').textContent = icon;
+      document.getElementById('adminLockLabel').textContent = label;
+
+      const list = document.getElementById('adminParticipantsList');
+      list.innerHTML = MOCK_PARTICIPANTS.map(p => `
+        <div class="participant-admin-row">
+          <div class="participant-admin-info">
+            <div class="participant-admin-name">${p.name}</div>
+            <div class="participant-admin-meta">${p.email} · ${p.submitted ? `הגיש · תשואה: ${formatReturn(p.portfolioReturn)}` : 'לא הגיש'}</div>
+          </div>
+          <div class="participant-admin-actions">
+            <button class="mini-btn" onclick="adminEditPortfolio(${p.id})">ערוך</button>
+            <button class="mini-btn danger" onclick="adminRemoveParticipant(${p.id})">הסר</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function adminRefreshNow() {
+      const btn = document.querySelector('.admin-action-card');
+      showToast('מרענן נתונים...', '');
+      setTimeout(() => {
+        renderLeaderboard();
+        showToast('נתונים עודכנו!', 'success');
+      }, 1500);
+    }
+
+    function adminToggleLock() {
+      STATE.isLocked = !STATE.isLocked;
+      renderAdminPanel();
+      showToast(STATE.isLocked ? 'הגשות ננעלו' : 'הגשות נפתחו', 'success');
+      renderLeaderboard();
+    }
+
+    function adminAddParticipant() {
+      openModal(`
+        <div class="modal-title">הוסף משתתף</div>
+        <div class="form-group">
+          <label class="form-label">שם תצוגה</label>
+          <input class="form-input" id="newParticipantName" placeholder="שם המשתתף">
+        </div>
+        <div class="form-group">
+          <label class="form-label">מייל</label>
+          <input class="form-input" id="newParticipantEmail" placeholder="email@example.com" dir="ltr" type="email">
+        </div>
+        <button class="btn btn-primary" onclick="confirmAddParticipant()">הוסף →</button>
+      `);
+    }
+
+    function confirmAddParticipant() {
+      const name = document.getElementById('newParticipantName').value.trim();
+      const email = document.getElementById('newParticipantEmail').value.trim();
+      if (!name || !email) { showToast('מלא שם ומייל', 'error'); return; }
+      MOCK_PARTICIPANTS.push({ id: Date.now(), name, email, submitted: false, portfolioReturn: null, holdings: [], lastUpdate: null });
+      renderAdminPanel();
+      renderLeaderboard();
+      closeModal();
+      showToast('משתתף נוסף!', 'success');
+    }
+
+    function adminEditPortfolio(id) {
+      const p = MOCK_PARTICIPANTS.find(x => x.id === id);
+      if (!p) return;
+      openModal(`
+        <div class="modal-title">ערוך תיק: ${p.name}</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">האדמין יכול לערוך בכל זמן, גם אחרי נעילה</div>
+        ${p.holdings.map((h,i) => `
+          <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:8px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <input class="form-input mono" value="${h.ticker}" placeholder="טיקר" style="font-size:13px;padding:8px 10px" oninput="p.holdings[${i}].ticker=this.value">
+              <input class="form-input mono" value="${h.exchange}" placeholder="בורסה" style="font-size:13px;padding:8px 10px" oninput="p.holdings[${i}].exchange=this.value">
+              <input class="form-input mono" type="number" value="${h.weight}" placeholder="%" style="font-size:13px;padding:8px 10px" oninput="p.holdings[${i}].weight=parseFloat(this.value)||0">
+            </div>
+          </div>
+        `).join('')}
+        <button class="btn btn-primary" onclick="saveAdminEdit(${id})">שמור שינויים</button>
+      `);
+    }
+
+    function saveAdminEdit(id) {
+      closeModal();
+      showToast('שינויים נשמרו', 'success');
+      renderLeaderboard();
+    }
+
+    function adminRemoveParticipant(id) {
+      if (!confirm('בטוח להסיר משתתף זה?')) return;
+      const idx = MOCK_PARTICIPANTS.findIndex(x => x.id === id);
+      if (idx > -1) MOCK_PARTICIPANTS.splice(idx, 1);
+      renderAdminPanel();
+      renderLeaderboard();
+      showToast('משתתף הוסר', 'success');
+    }
+
+    function adminExportData() {
+      const data = MOCK_PARTICIPANTS.map(p => ({
+        name: p.name,
+        email: p.email,
+        submitted: p.submitted,
+        portfolioReturn: p.portfolioReturn,
+        holdings: p.holdings
+      }));
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'competition-data.json'; a.click();
+      showToast('נתונים יוצאו!', 'success');
+    }
+
+    // ======== NAVIGATION ========
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-tab, .bottom-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.screen === name);
+      });
+      document.getElementById(`screen-${name}`).classList.add('active');
+      window.scrollTo(0, 0);
+
+      if (name === 'submit' && !STATE.currentUser) {
+        // show auth state
+      }
+    }
+
+    function toggleSortMode() { /* future: toggle sort */ }
+
+    // ======== MODALS ========
+    function openModal(html) {
+      document.getElementById('modalBody').innerHTML = html;
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal(e) {
+      if (e && e.target !== document.getElementById('modalOverlay')) return;
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    // ======== TOAST ========
+    function showToast(msg, type='') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 3000);
+    }
+
+    // ======== REFRESH ========
+    function manualRefresh() {
+      const btn = document.getElementById('refreshBtn');
+      btn.innerHTML = '<span class="spin">⟳</span>';
+      setTimeout(() => {
+        renderLeaderboard();
+        btn.textContent = '⟳';
+        showToast('נתונים עודכנו', 'success');
+      }, 1000);
+    }
+
+    // Auto-refresh every hour
+    function startAutoRefresh() {
+      STATE.refreshInterval = setInterval(() => {
+        renderLeaderboard();
+      }, 3600000);
+    }
+
+    // ======== SHARE ========
+    function shareApp() {
+      if (navigator.share) {
+        navigator.share({ title: 'תחרות השקעות Q2 2026', url: location.href });
+      } else {
+        navigator.clipboard.writeText(location.href);
+        showToast('לינק הועתק!', 'success');
+      }
+    }
+
+    // ======== SCROLL HEADER ========
+    window.addEventListener('scroll', () => {
+      document.getElementById('appHeader').classList.toggle('scrolled', window.scrollY > 10);
+    });
+
+    // ======== INIT ========
+    function init() {
+      updatePhase();
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+      renderLeaderboard();
+      startAutoRefresh();
+
+      // Check if submission is locked
+      if (STATE.isLocked) {
+        document.getElementById('lockedBanner')?.classList.remove('hidden');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
