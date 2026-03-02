@@ -1534,25 +1534,21 @@
     // ======== PORTFOLIO BUILDER ========
     const KNOWN_TICKERS = []; // חיפוש חי דרך Yahoo Finance
 
-    // חיפוש טיקרים חי דרך Yahoo Finance (דרך Supabase proxy)
+    // חיפוש טיקרים דרך Supabase Edge Function (פותר CORS)
     async function liveSearchTicker(query) {
       if (!query || query.length < 1) return []
       try {
-        // Yahoo Finance autocomplete API
-        const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`
-        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+        const url = `${SUPABASE_URL}/functions/v1/search-ticker?q=${encodeURIComponent(query)}`
+        const res = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        })
         if (!res.ok) return fallbackSearch(query)
         const data = await res.json()
-        const quotes = data?.quotes || []
-        return quotes
-          .filter(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF')
-          .map(q => ({
-            symbol: q.symbol.replace('.TA', ''),
-            name: q.longname || q.shortname || q.symbol,
-            exchange: q.symbol.endsWith('.TA') ? 'TASE' : 
-                      (q.exchange === 'NMS' || q.exchange === 'NGM' || q.exchange === 'NCM') ? 'NASDAQ' : 
-                      q.exchange === 'NYQ' ? 'NYSE' : q.exchange
-          }))
+        if (data.results && data.results.length > 0) return data.results
+        return fallbackSearch(query)
       } catch(e) {
         return fallbackSearch(query)
       }
