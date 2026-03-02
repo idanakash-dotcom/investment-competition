@@ -931,43 +931,57 @@
       <!-- ===== SUBMIT SCREEN ===== -->
       <section class="screen" id="screen-submit">
         <div id="submitContent">
-          <!-- State 0: Auth -->
+          <!-- מצב 0: כניסה / הרשמה -->
           <div id="authStep">
-            <div class="auth-card animate-in">
-              <div class="auth-title">התחברות משתתף</div>
-              <div class="auth-desc">הכנס את כתובת המייל שלך לקבלת קוד אימות חד-פעמי (OTP)</div>
+            <!-- כניסה -->
+            <div id="loginCard" class="auth-card animate-in">
+              <div class="auth-title">כניסה לתחרות</div>
+              <div class="auth-desc">משתתף קיים? הכנס שם משתמש וסיסמה</div>
               <div class="form-group">
-                <label class="form-label">כתובת מייל</label>
-                <input class="form-input" type="email" id="authEmail" placeholder="your@email.com" dir="ltr">
+                <label class="form-label">שם משתמש</label>
+                <input class="form-input mono" type="text" id="authUsername" placeholder="username" dir="ltr" onkeydown="if(event.key==='Enter') loginUser()">
               </div>
               <div class="form-group">
-                <label class="form-label">שם תצוגה</label>
-                <input class="form-input" type="text" id="authName" placeholder="השם שיוצג בלידרבורד">
+                <label class="form-label">סיסמה</label>
+                <input class="form-input mono" type="password" id="authPassword" placeholder="••••••••" dir="ltr" onkeydown="if(event.key==='Enter') loginUser()">
               </div>
-              <button class="btn btn-primary" onclick="sendOTP()">שלח קוד אימות →</button>
+              <div id="loginError" class="validation-note error hidden">שם משתמש או סיסמה שגויים</div>
+              <button class="btn btn-primary" onclick="loginUser()">כניסה →</button>
+              <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted)">
+                משתתף חדש? <span style="color:var(--accent);cursor:pointer" onclick="toggleAuthMode('register')">הרשמה</span>
+              </div>
+            </div>
+
+            <!-- הרשמה -->
+            <div id="registerCard" class="auth-card animate-in hidden">
+              <div class="auth-title">הרשמה לתחרות</div>
+              <div class="auth-desc">בחר שם תצוגה, שם משתמש וסיסמה</div>
+              <div class="form-group">
+                <label class="form-label">שם תצוגה (יוצג בלידרבורד)</label>
+                <input class="form-input" type="text" id="regDisplayName" placeholder="למשל: דוד לוי">
+              </div>
+              <div class="form-group">
+                <label class="form-label">שם משתמש (לכניסה)</label>
+                <input class="form-input mono" type="text" id="regUsername" placeholder="david123" dir="ltr">
+              </div>
+              <div class="form-group">
+                <label class="form-label">סיסמה (לפחות 6 תווים)</label>
+                <input class="form-input mono" type="password" id="regPassword" placeholder="••••••••" dir="ltr">
+              </div>
+              <div class="form-group">
+                <label class="form-label">אימות סיסמה</label>
+                <input class="form-input mono" type="password" id="regPasswordConfirm" placeholder="••••••••" dir="ltr" onkeydown="if(event.key==='Enter') registerUser()">
+              </div>
+              <div id="registerError" class="validation-note error hidden"></div>
+              <button class="btn btn-primary" onclick="registerUser()">הרשמה →</button>
+              <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted)">
+                כבר רשום? <span style="color:var(--accent);cursor:pointer" onclick="toggleAuthMode('login')">כניסה</span>
+              </div>
             </div>
           </div>
 
-          <!-- State 1: OTP -->
-          <div id="otpStep" class="hidden">
-            <div class="auth-card animate-in">
-              <div class="auth-title">אימות קוד</div>
-              <div class="auth-desc" id="otpDesc">הזן את הקוד שנשלח ל-</div>
-              <div class="form-group">
-                <div class="otp-inputs">
-                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 1)">
-                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 2)">
-                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 3)">
-                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 4)">
-                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 5)">
-                  <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpInput(this, 6)">
-                </div>
-              </div>
-              <button class="btn btn-primary" onclick="verifyOTP()">אמת קוד →</button>
-              <br><br>
-              <button class="btn btn-secondary" onclick="backToAuth()">← חזרה</button>
-            </div>
-          </div>
+          <!-- placeholder -->
+          <div id="otpStep" class="hidden"></div>
 
           <!-- State 2: Portfolio Builder -->
           <div id="portfolioStep" class="hidden">
@@ -1466,43 +1480,112 @@
     }
 
     // ======== SUBMIT / AUTH ========
-    function sendOTP() {
-      const email = document.getElementById('authEmail').value.trim();
-      const name = document.getElementById('authName').value.trim();
-      if (!email || !email.includes('@')) { showToast('הכנס כתובת מייל תקינה', 'error'); return; }
-      if (!name) { showToast('הכנס שם תצוגה', 'error'); return; }
-
-      // Simulate sending OTP
-      document.getElementById('otpDesc').textContent = `הזן את הקוד שנשלח ל-${email}`;
-      document.getElementById('authStep').classList.add('hidden');
-      document.getElementById('otpStep').classList.remove('hidden');
-      showToast('קוד נשלח למייל! (דמו: 123456)', 'success');
-    }
-
-    function otpInput(input, pos) {
-      if (input.value.length === 1 && pos < 6) {
-        input.parentElement.children[pos].focus();
+    function toggleAuthMode(mode) {
+      const login = document.getElementById('loginCard')
+      const reg = document.getElementById('registerCard')
+      if (mode === 'register') {
+        login.classList.add('hidden')
+        reg.classList.remove('hidden')
+      } else {
+        reg.classList.add('hidden')
+        login.classList.remove('hidden')
       }
     }
 
-    function verifyOTP() {
-      const inputs = document.querySelectorAll('.otp-input');
-      const code = [...inputs].map(i=>i.value).join('');
-      if (code.length < 6) { showToast('הכנס קוד 6 ספרות', 'error'); return; }
+    async function loginUser() {
+      const username = document.getElementById('authUsername').value.trim()
+      const password = document.getElementById('authPassword').value
+      if (!username || !password) { showToast('הכנס שם משתמש וסיסמה', 'error'); return; }
 
-      // Simulate verification (demo: any 6-digit code works)
-      const name = document.getElementById('authName').value.trim();
-      STATE.currentUser = { id: 99, name, email: document.getElementById('authEmail').value };
+      try {
+        const sb = await initSupabase()
+        const { data, error } = await sb
+          .from('profiles')
+          .select('id, display_name, username, password_hash')
+          .eq('username', username)
+          .maybeSingle()
 
-      document.getElementById('otpStep').classList.add('hidden');
-      document.getElementById('portfolioStep').classList.remove('hidden');
-      renderPortfolioBuilder();
-      showToast('מחובר בהצלחה! 👋', 'success');
+        if (!data) {
+          document.getElementById('loginError').classList.remove('hidden')
+          return
+        }
+
+        if (data.password_hash !== btoa(password)) {
+          document.getElementById('loginError').classList.remove('hidden')
+          return
+        }
+
+        document.getElementById('loginError').classList.add('hidden')
+        STATE.currentUser = { id: data.id, name: data.display_name, username }
+        document.getElementById('authStep').classList.add('hidden')
+        document.getElementById('portfolioStep').classList.remove('hidden')
+        renderPortfolioBuilder()
+        showToast(`שלום ${data.display_name}! 👋`, 'success')
+
+      } catch(err) {
+        showToast('שגיאת חיבור', 'error')
+      }
     }
 
+    async function registerUser() {
+      const displayName = document.getElementById('regDisplayName').value.trim()
+      const username = document.getElementById('regUsername').value.trim()
+      const password = document.getElementById('regPassword').value
+      const confirm = document.getElementById('regPasswordConfirm').value
+      const errEl = document.getElementById('registerError')
+
+      if (!displayName || !username || !password) {
+        errEl.textContent = 'מלא את כל השדות'; errEl.classList.remove('hidden'); return
+      }
+      if (password.length < 6) {
+        errEl.textContent = 'סיסמה חייבת להיות לפחות 6 תווים'; errEl.classList.remove('hidden'); return
+      }
+      if (password !== confirm) {
+        errEl.textContent = 'הסיסמאות לא תואמות'; errEl.classList.remove('hidden'); return
+      }
+
+      try {
+        const sb = await initSupabase()
+
+        // בדוק אם שם משתמש תפוס
+        const { data: existing } = await sb.from('profiles').select('id').eq('username', username).maybeSingle()
+        if (existing) {
+          errEl.textContent = 'שם המשתמש תפוס — בחר אחר'; errEl.classList.remove('hidden'); return
+        }
+
+        const { data, error } = await sb.from('profiles').insert({
+          display_name: displayName,
+          username: username,
+          password_hash: btoa(password),
+          role: 'participant'
+        }).select().single()
+
+        if (error) throw error
+
+        errEl.classList.add('hidden')
+        STATE.currentUser = { id: data.id, name: displayName, username }
+        document.getElementById('authStep').classList.add('hidden')
+        document.getElementById('portfolioStep').classList.remove('hidden')
+        renderPortfolioBuilder()
+        showToast(`ברוך הבא ${displayName}! 🎉`, 'success')
+
+      } catch(err) {
+        errEl.textContent = 'שגיאה: ' + err.message; errEl.classList.remove('hidden')
+      }
+    }
+
+    function sendOTP() { loginUser(); }
+    function otpInput() {}
+    function verifyOTP() { loginUser(); }
     function backToAuth() {
-      document.getElementById('otpStep').classList.add('hidden');
-      document.getElementById('authStep').classList.remove('hidden');
+      document.getElementById('authStep').classList.remove('hidden')
+    }
+
+    // איפוס סיסמה על ידי אדמין
+    async function adminResetPassword(profileId, newPassword) {
+      const sb = await initSupabase()
+      await sb.from('profiles').update({ password_hash: btoa(newPassword) }).eq('id', profileId)
+      showToast('סיסמה אופסה', 'success')
     }
 
     function logoutUser() {
@@ -1728,26 +1811,48 @@
       openModal(`
         <div class="modal-title">הוסף משתתף</div>
         <div class="form-group">
-          <label class="form-label">שם תצוגה</label>
-          <input class="form-input" id="newParticipantName" placeholder="שם המשתתף">
+          <label class="form-label">שם תצוגה (מה שיוצג בלידרבורד)</label>
+          <input class="form-input" id="newParticipantName" placeholder="למשל: דוד לוי">
         </div>
         <div class="form-group">
-          <label class="form-label">מייל</label>
-          <input class="form-input" id="newParticipantEmail" placeholder="email@example.com" dir="ltr" type="email">
+          <label class="form-label">שם משתמש (לכניסה)</label>
+          <input class="form-input mono" id="newParticipantUsername" placeholder="למשל: david" dir="ltr">
         </div>
-        <button class="btn btn-primary" onclick="confirmAddParticipant()">הוסף →</button>
+        <div class="form-group">
+          <label class="form-label">סיסמה ראשונית</label>
+          <input class="form-input mono" id="newParticipantPassword" placeholder="הסיסמה שתשלח למשתתף" dir="ltr">
+        </div>
+        <div class="validation-note" style="margin-bottom:12px">⚠️ שמור את הסיסמה — תצטרך לשלוח אותה למשתתף</div>
+        <button class="btn btn-primary" onclick="confirmAddParticipant()">הוסף משתתף →</button>
       `);
     }
 
-    function confirmAddParticipant() {
+    async function confirmAddParticipant() {
       const name = document.getElementById('newParticipantName').value.trim();
-      const email = document.getElementById('newParticipantEmail').value.trim();
-      if (!name || !email) { showToast('מלא שם ומייל', 'error'); return; }
-      MOCK_PARTICIPANTS.push({ id: Date.now(), name, email, submitted: false, portfolioReturn: null, holdings: [], lastUpdate: null });
-      renderAdminPanel();
-      renderLeaderboard();
-      closeModal();
-      showToast('משתתף נוסף!', 'success');
+      const username = document.getElementById('newParticipantUsername').value.trim();
+      const password = document.getElementById('newParticipantPassword').value.trim();
+      if (!name || !username || !password) { showToast('מלא את כל השדות', 'error'); return; }
+      
+      try {
+        const sb = await initSupabase()
+        const { data, error } = await sb.from('profiles').insert({
+          display_name: name,
+          username: username,
+          password_hash: btoa(password),
+          role: 'participant'
+        }).select().single()
+        
+        if (error) throw error
+        
+        // הוסף גם לרשימה המקומית
+        MOCK_PARTICIPANTS.push({ id: data.id, name, submitted: false, portfolioReturn: null, holdings: [], lastUpdate: null });
+        renderAdminPanel();
+        renderLeaderboard();
+        closeModal();
+        showToast('משתתף נוסף! ✓', 'success');
+      } catch(err) {
+        showToast('שגיאה: ' + err.message, 'error');
+      }
     }
 
     function adminEditPortfolio(id) {
