@@ -1738,25 +1738,84 @@
       document.getElementById('adminPassword').value = '';
     }
 
-    function renderAdminPanel() {
+    async function renderAdminPanel() {
       const icon = STATE.isLocked ? '🔓' : '🔒';
       const label = STATE.isLocked ? 'בטל נעילה' : 'נעל הגשות';
       document.getElementById('adminLockIcon').textContent = icon;
       document.getElementById('adminLockLabel').textContent = label;
 
       const list = document.getElementById('adminParticipantsList');
-      list.innerHTML = (STATE.liveParticipants || []).map(p => `
-        <div class="participant-admin-row">
-          <div class="participant-admin-info">
-            <div class="participant-admin-name">${p.name}</div>
-            <div class="participant-admin-meta">${p.email} · ${p.submitted ? `הגיש · תשואה: ${formatReturn(p.portfolioReturn)}` : 'לא הגיש'}</div>
-          </div>
-          <div class="participant-admin-actions">
-            <button class="mini-btn" onclick="adminEditPortfolio(${p.id})">ערוך</button>
-            <button class="mini-btn danger" onclick="adminRemoveParticipant(${p.id})">הסר</button>
-          </div>
+      list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px">טוען משתתפים...</div>';
+
+      try {
+        const sb = await initSupabase()
+        
+        // שלוף את כל המשתתפים עם ההגשות שלהם
+        const { data: profiles } = await sb
+          .from('profiles')
+          .select('id, display_name, username, role')
+          .eq('role', 'participant')
+          .order('display_name')
+
+        const { data: submissions } = await sb
+          .from('submissions')
+          .select('id, profile_id, portfolio_return, submission_items(ticker, exchange, weight)')
+
+        const submissionsMap = {}
+        for (const s of submissions || []) {
+          submissionsMap[s.profile_id] = s
+        }
+
+        if (!profiles || profiles.length === 0) {
+          list.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:12px">אין משתתפים רשומים עדיין</div>'
+          return
+        }
+
+        list.innerHTML = profiles.map(p => {
+          const sub = submissionsMap[p.id]
+          const hasSubmission = !!sub
+          const ret = sub?.portfolio_return ? parseFloat(sub.portfolio_return) : null
+          const tickers = sub?.submission_items?.map(i => i.ticker).join(', ') || '—'
+          
+          return `
+            <div class="participant-admin-row">
+              <div class="participant-admin-info">
+                <div class="participant-admin-name">${p.display_name} <span style="font-size:11px;color:var(--text-muted)">(${p.username})</span></div>
+                <div class="participant-admin-meta">
+                  ${hasSubmission 
+                    ? `✅ הגיש · תשואה: ${ret !== null ? formatReturn(ret) : 'טרם חושב'} · ${tickers}` 
+                    : '⏳ טרם הגיש'}
+                </div>
+              </div>
+              <div class="participant-admin-actions">
+                <button class="mini-btn" onclick="adminResetPasswordPrompt('${p.id}','${p.display_name}')">איפוס סיסמה</button>
+                <button class="mini-btn danger" onclick="adminRemoveParticipant('${p.id}')">הסר</button>
+              </div>
+            </div>
+          `
+        }).join('')
+
+      } catch(err) {
+        list.innerHTML = `<div style="color:var(--red);font-size:13px;padding:12px">שגיאה: ${err.message}</div>`
+      }
+    }
+
+    function adminResetPasswordPrompt(profileId, name) {
+      openModal(`
+        <div class="modal-title">איפוס סיסמה — ${name}</div>
+        <div class="form-group">
+          <label class="form-label">סיסמה חדשה</label>
+          <input class="form-input mono" id="newPasswordInput" type="text" placeholder="הכנס סיסמה חדשה" dir="ltr">
         </div>
-      `).join('');
+        <button class="btn btn-primary" onclick="doResetPassword('${profileId}')">אפס סיסמה</button>
+      `)
+    }
+
+    async function doResetPassword(profileId) {
+      const newPw = document.getElementById('newPasswordInput').value.trim()
+      if (!newPw || newPw.length < 4) { showToast('סיסמה קצרה מדי', 'error'); return }
+      await adminResetPassword(profileId, newPw)
+      closeModal()
     }
 
     function adminRefreshNow() {
@@ -1848,13 +1907,18 @@
       renderLeaderboard();
     }
 
-    function adminRemoveParticipant(id) {
+    async function adminRemoveParticipant(id) {
       if (!confirm('בטוח להסיר משתתף זה?')) return;
-      const idx = MOCK_PARTICIPANTS.findIndex(x => x.id === id);
-      if (idx > -1) MOCK_PARTICIPANTS.splice(idx, 1);
-      renderAdminPanel();
-      renderLeaderboard();
-      showToast('משתתף הוסר', 'success');
+      try {
+        const sb = await initSupabase()
+        await sb.from('submissions').delete().eq('profile_id', id)
+        await sb.from('profiles').delete().eq('id', id)
+        renderAdminPanel()
+        renderLeaderboard()
+        showToast('משתתף הוסר', 'success')
+      } catch(err) {
+        showToast('שגיאה: ' + err.message, 'error')
+      }
     }
 
     function adminExportData() {
