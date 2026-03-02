@@ -919,6 +919,10 @@
         <div class="leaderboard-list animate-in delay-3" id="leaderboardList">
           <!-- Populated by JS -->
         </div>
+        <div id="emptyLeaderboard" class="empty-state hidden">
+          <div class="empty-state-icon">🏁</div>
+          <div class="empty-state-text">עדיין אין משתתפים רשומים<br>היה הראשון להגיש תיק!</div>
+        </div>
 
       </section>
 
@@ -1188,89 +1192,7 @@
     };
 
     // Mock data — replace with Supabase calls
-    const MOCK_PARTICIPANTS = [
-      {
-        id: 1, name: 'אביגיל כהן', email: 'a@x.com',
-        submitted: true,
-        portfolioReturn: 18.41,
-        holdings: [
-          { ticker: 'NVDA', exchange: 'NASDAQ', weight: 40, assetReturn: 38.2, contribution: 15.28, startPrice: 875.40, lastPrice: 1209.80 },
-          { ticker: 'TSLA', exchange: 'NASDAQ', weight: 30, assetReturn: 12.1, contribution: 3.63, startPrice: 258.00, lastPrice: 289.25 },
-          { ticker: 'TEVA', exchange: 'TASE', weight: 30, assetReturn: -1.5, contribution: -0.45, startPrice: 52.40, lastPrice: 51.62 },
-        ],
-        lastUpdate: '13:45',
-      },
-      {
-        id: 2, name: 'דוד לוי', email: 'b@x.com',
-        submitted: true,
-        portfolioReturn: 12.87,
-        holdings: [
-          { ticker: 'AAPL', exchange: 'NASDAQ', weight: 50, assetReturn: 15.2, contribution: 7.60, startPrice: 221.00, lastPrice: 254.60 },
-          { ticker: 'MSFT', exchange: 'NASDAQ', weight: 30, assetReturn: 11.4, contribution: 3.42, startPrice: 415.00, lastPrice: 462.40 },
-          { ticker: 'SPY',  exchange: 'NYSE',   weight: 20, assetReturn: 9.25, contribution: 1.85, startPrice: 528.00, lastPrice: 576.80 },
-        ],
-        lastUpdate: '13:45',
-      },
-      {
-        id: 3, name: 'מרים אברהם', email: 'c@x.com',
-        submitted: true,
-        portfolioReturn: 9.12,
-        holdings: [
-          { ticker: 'PLTR', exchange: 'NYSE',   weight: 60, assetReturn: 12.8, contribution: 7.68, startPrice: 24.20, lastPrice: 27.30 },
-          { ticker: 'GOOGL',exchange: 'NASDAQ', weight: 40, assetReturn: 3.6,  contribution: 1.44, startPrice: 178.00, lastPrice: 184.40 },
-        ],
-        lastUpdate: '13:45',
-      },
-      {
-        id: 4, name: 'יוסי גולן', email: 'd@x.com',
-        submitted: true,
-        portfolioReturn: 5.33,
-        holdings: [
-          { ticker: 'WIX',  exchange: 'NASDAQ', weight: 50, assetReturn: 8.2, contribution: 4.10, startPrice: 185.00, lastPrice: 200.20 },
-          { ticker: 'NICE', exchange: 'NASDAQ', weight: 30, assetReturn: 2.1, contribution: 0.63, startPrice: 195.00, lastPrice: 199.10 },
-          { ticker: 'CEVA', exchange: 'NASDAQ', weight: 20, assetReturn: 3.0, contribution: 0.60, startPrice: 22.50, lastPrice: 23.18 },
-        ],
-        lastUpdate: '13:45',
-      },
-      {
-        id: 5, name: 'רחל ברנשטיין', email: 'e@x.com',
-        submitted: true,
-        portfolioReturn: 2.14,
-        holdings: [
-          { ticker: 'QQQ', exchange: 'NASDAQ', weight: 60, assetReturn: 1.5, contribution: 0.90, startPrice: 445.00, lastPrice: 451.70 },
-          { ticker: 'GLD', exchange: 'NYSE',   weight: 40, assetReturn: 3.1, contribution: 1.24, startPrice: 218.00, lastPrice: 224.80 },
-        ],
-        lastUpdate: '13:45',
-      },
-      {
-        id: 6, name: 'נתן פרידמן', email: 'f@x.com',
-        submitted: true,
-        portfolioReturn: -0.88,
-        holdings: [
-          { ticker: 'BABA', exchange: 'NYSE',   weight: 50, assetReturn: -2.4, contribution: -1.20, startPrice: 82.00, lastPrice: 80.03 },
-          { ticker: 'NIO',  exchange: 'NYSE',   weight: 30, assetReturn: -1.5, contribution: -0.45, startPrice: 5.80, lastPrice: 5.71 },
-          { ticker: 'KWEB', exchange: 'NYSE',   weight: 20, assetReturn: 3.85, contribution: 0.77, startPrice: 31.00, lastPrice: 32.19 },
-        ],
-        lastUpdate: '13:45',
-      },
-      {
-        id: 7, name: 'שרה יצחק', email: 'g@x.com',
-        submitted: true,
-        portfolioReturn: -3.55,
-        holdings: [
-          { ticker: 'HOOD', exchange: 'NASDAQ', weight: 60, assetReturn: -6.2, contribution: -3.72, startPrice: 21.00, lastPrice: 19.70 },
-          { ticker: 'SOFI', exchange: 'NASDAQ', weight: 40, assetReturn: 0.43, contribution: 0.17, startPrice: 12.40, lastPrice: 12.45 },
-        ],
-        lastUpdate: '13:45',
-      },
-      {
-        id: 8, name: 'בני שפירא', email: 'h@x.com',
-        submitted: false,
-        portfolioReturn: null,
-        holdings: [],
-        lastUpdate: null,
-      },
-    ];
+    const MOCK_PARTICIPANTS = []; // נתוני דמו הוסרו — משתמשים אמיתיים מ-Supabase
 
     // ======== PHASE LOGIC ========
     function updatePhase() {
@@ -1335,7 +1257,8 @@
     async function renderLeaderboard() {
       updatePhase();
       const liveData = await fetchLeaderboardFromDB()
-      const sourceData = (liveData && liveData.length > 0) ? liveData : MOCK_PARTICIPANTS
+      const sourceData = (liveData && liveData.length > 0) ? liveData : []
+      STATE.liveParticipants = sourceData
       const sorted = [...sourceData]
         .sort((a,b) => {
           if (a.portfolioReturn === null && b.portfolioReturn === null) return 0;
@@ -1397,6 +1320,18 @@
       }).join('');
 
       document.getElementById('lastUpdateText').textContent = 'עודכן: ' + new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+      
+      // הצג/הסתר empty state
+      const emptyEl = document.getElementById('emptyLeaderboard');
+      if (emptyEl) {
+        if (sorted.length === 0) {
+          emptyEl.classList.remove('hidden');
+          document.getElementById('leaderboardList').style.display = 'none';
+        } else {
+          emptyEl.classList.add('hidden');
+          document.getElementById('leaderboardList').style.display = '';
+        }
+      }
     }
 
     function formatReturn(val) {
@@ -1407,7 +1342,7 @@
 
     // ======== PROFILE ========
     function showProfile(id) {
-      const p = MOCK_PARTICIPANTS.find(x => x.id === id);
+      const p = (STATE.liveParticipants || []).find(x => x.id === id) || MOCK_PARTICIPANTS.find(x => x.id === id);
       if (!p) return;
 
       showScreen('profile');
@@ -1415,7 +1350,7 @@
       const isVisible = STATE.isLocked || STATE.isAdmin || STATE.currentUser?.id === id;
       const ret = p.portfolioReturn;
       const retClass = ret === null ? 'neutral' : ret > 0 ? 'positive' : ret < 0 ? 'negative' : 'neutral';
-      const rank = [...MOCK_PARTICIPANTS].sort((a,b)=>(b.portfolioReturn||0)-(a.portfolioReturn||0)).findIndex(x=>x.id===id)+1;
+      const rank = [...(STATE.liveParticipants || [])].sort((a,b)=>(b.portfolioReturn||0)-(a.portfolioReturn||0)).findIndex(x=>x.id===id)+1;
       const rankBadgeClass = rank <=3 ? `r${rank}` : 'rn';
 
       let holdingsHTML = '';
@@ -1597,26 +1532,54 @@
     }
 
     // ======== PORTFOLIO BUILDER ========
-    const KNOWN_TICKERS = [
-      { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ' },
-      { symbol: 'MSFT', name: 'Microsoft Corp.', exchange: 'NASDAQ' },
-      { symbol: 'NVDA', name: 'NVIDIA Corp.', exchange: 'NASDAQ' },
-      { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ' },
-      { symbol: 'TSLA', name: 'Tesla Inc.', exchange: 'NASDAQ' },
-      { symbol: 'AMZN', name: 'Amazon.com Inc.', exchange: 'NASDAQ' },
-      { symbol: 'META', name: 'Meta Platforms', exchange: 'NASDAQ' },
-      { symbol: 'PLTR', name: 'Palantir Technologies', exchange: 'NYSE' },
-      { symbol: 'SPY', name: 'SPDR S&P 500 ETF', exchange: 'NYSE' },
-      { symbol: 'QQQ', name: 'Invesco QQQ Trust', exchange: 'NASDAQ' },
-      { symbol: 'GLD', name: 'SPDR Gold Shares', exchange: 'NYSE' },
-      { symbol: 'BABA', name: 'Alibaba Group', exchange: 'NYSE' },
-      { symbol: 'WIX', name: 'Wix.com Ltd.', exchange: 'NASDAQ' },
-      { symbol: 'TEVA', name: 'Teva Pharmaceutical', exchange: 'TASE' },
-      { symbol: 'NICE', name: 'NICE Systems', exchange: 'NASDAQ' },
-      { symbol: 'CEVA', name: 'CEVA Inc.', exchange: 'NASDAQ' },
-      { symbol: 'HOOD', name: 'Robinhood Markets', exchange: 'NASDAQ' },
-      { symbol: 'SOFI', name: 'SoFi Technologies', exchange: 'NASDAQ' },
-    ];
+    const KNOWN_TICKERS = []; // חיפוש חי דרך Yahoo Finance
+
+    // חיפוש טיקרים חי דרך Yahoo Finance (דרך Supabase proxy)
+    async function liveSearchTicker(query) {
+      if (!query || query.length < 1) return []
+      try {
+        // Yahoo Finance autocomplete API
+        const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`
+        const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+        if (!res.ok) return fallbackSearch(query)
+        const data = await res.json()
+        const quotes = data?.quotes || []
+        return quotes
+          .filter(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF')
+          .map(q => ({
+            symbol: q.symbol.replace('.TA', ''),
+            name: q.longname || q.shortname || q.symbol,
+            exchange: q.symbol.endsWith('.TA') ? 'TASE' : 
+                      (q.exchange === 'NMS' || q.exchange === 'NGM' || q.exchange === 'NCM') ? 'NASDAQ' : 
+                      q.exchange === 'NYQ' ? 'NYSE' : q.exchange
+          }))
+      } catch(e) {
+        return fallbackSearch(query)
+      }
+    }
+
+    // fallback לרשימה קטנה אם Yahoo נחסם
+    function fallbackSearch(query) {
+      const base = [
+        { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ' },
+        { symbol: 'MSFT', name: 'Microsoft Corp.', exchange: 'NASDAQ' },
+        { symbol: 'NVDA', name: 'NVIDIA Corp.', exchange: 'NASDAQ' },
+        { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ' },
+        { symbol: 'TSLA', name: 'Tesla Inc.', exchange: 'NASDAQ' },
+        { symbol: 'AMZN', name: 'Amazon.com Inc.', exchange: 'NASDAQ' },
+        { symbol: 'META', name: 'Meta Platforms', exchange: 'NASDAQ' },
+        { symbol: 'SPY', name: 'SPDR S&P 500 ETF', exchange: 'NYSE' },
+        { symbol: 'QQQ', name: 'Invesco QQQ Trust', exchange: 'NASDAQ' },
+        { symbol: 'TEVA', name: 'Teva Pharmaceutical', exchange: 'TASE' },
+        { symbol: 'WIX', name: 'Wix.com Ltd.', exchange: 'NASDAQ' },
+        { symbol: 'NICE', name: 'NICE Systems', exchange: 'NASDAQ' },
+        { symbol: 'CHKP', name: 'Check Point Software', exchange: 'NASDAQ' },
+        { symbol: 'MNST', name: 'Monster Beverage', exchange: 'NASDAQ' },
+      ]
+      const q = query.toUpperCase()
+      return base.filter(t => t.symbol.startsWith(q) || t.name.toLowerCase().includes(query.toLowerCase()))
+    }
+
 
     function renderPortfolioBuilder() {
       const isLocked = STATE.isLocked && !STATE.isAdmin;
@@ -1721,24 +1684,33 @@
     }
 
     // ======== TICKER SEARCH ========
+    // debounce timer
+    let searchTimer = null;
+
     function searchTicker(rowIdx, val) {
       const resultsEl = document.getElementById(`tickerSearch${rowIdx}`);
       if (!val || val.length < 1) { resultsEl.style.display = 'none'; return; }
-      
-      const matches = KNOWN_TICKERS.filter(t => 
-        t.symbol.toUpperCase().startsWith(val.toUpperCase()) ||
-        t.name.toLowerCase().includes(val.toLowerCase())
-      ).slice(0, 4);
 
-      if (matches.length === 0) { resultsEl.style.display = 'none'; return; }
-
+      // הצג "מחפש..."
       resultsEl.style.display = 'block';
-      resultsEl.innerHTML = matches.map(t => `
-        <div class="ticker-result" onclick="selectTicker(${rowIdx},'${t.symbol}','${t.exchange}')">
-          <div class="ticker-result-symbol">${t.symbol} <span style="font-size:11px;color:var(--text-muted);font-family:inherit"> — ${t.exchange}</span></div>
-          <div class="ticker-result-name">${t.name}</div>
-        </div>
-      `).join('');
+      resultsEl.innerHTML = '<div class="ticker-result" style="color:var(--text-muted)">מחפש...</div>';
+
+      // debounce — חכה 400ms לפני שליחת בקשה
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(async () => {
+        const matches = await liveSearchTicker(val);
+        if (matches.length === 0) {
+          resultsEl.innerHTML = '<div class="ticker-result" style="color:var(--text-muted)">לא נמצאו תוצאות</div>';
+          return;
+        }
+        resultsEl.style.display = 'block';
+        resultsEl.innerHTML = matches.slice(0, 6).map(t => `
+          <div class="ticker-result" onclick="selectTicker(${rowIdx},'${t.symbol}','${t.exchange}')">
+            <div class="ticker-result-symbol">${t.symbol} <span style="font-size:11px;color:var(--text-muted);font-family:inherit"> — ${t.exchange}</span></div>
+            <div class="ticker-result-name">${t.name}</div>
+          </div>
+        `).join('');
+      }, 400);
     }
 
     function selectTicker(rowIdx, symbol, exchange) {
@@ -1777,7 +1749,7 @@
       document.getElementById('adminLockLabel').textContent = label;
 
       const list = document.getElementById('adminParticipantsList');
-      list.innerHTML = MOCK_PARTICIPANTS.map(p => `
+      list.innerHTML = (STATE.liveParticipants || []).map(p => `
         <div class="participant-admin-row">
           <div class="participant-admin-info">
             <div class="participant-admin-name">${p.name}</div>
