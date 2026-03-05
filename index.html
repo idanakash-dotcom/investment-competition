@@ -1670,13 +1670,60 @@
       return errors.length === 0;
     }
 
-    function submitPortfolio() {
+    async function submitPortfolio() {
       if (!validatePortfolio()) { showToast('תקן שגיאות לפני הגשה', 'error'); return; }
       if (STATE.isLocked && !STATE.isAdmin) { showToast('ההגשות נעולות', 'error'); return; }
+      if (!STATE.currentUser) { showToast('יש להתחבר תחילה', 'error'); return; }
 
-      // Simulate submission
-      showToast('התיק הוגש בהצלחה! ✓', 'success');
-      setTimeout(() => showScreen('leaderboard'), 1500);
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'שומר...';
+
+      try {
+        const sb = await initSupabase()
+
+        // מחק הגשה קודמת אם קיימת
+        const { data: existing } = await sb
+          .from('submissions')
+          .select('id')
+          .eq('profile_id', STATE.currentUser.id)
+          .maybeSingle()
+
+        if (existing) {
+          await sb.from('submission_items').delete().eq('submission_id', existing.id)
+          await sb.from('submissions').delete().eq('id', existing.id)
+        }
+
+        // צור הגשה חדשה
+        const { data: sub, error: subErr } = await sb
+          .from('submissions')
+          .insert({ profile_id: STATE.currentUser.id })
+          .select()
+          .single()
+
+        if (subErr) throw subErr
+
+        // שמור פריטי תיק
+        const validHoldings = STATE.holdings.filter(h => h.ticker && h.weight > 0)
+        const items = validHoldings.map(h => ({
+          submission_id: sub.id,
+          ticker: h.ticker,
+          exchange: h.exchange || 'NASDAQ',
+          weight: h.weight
+        }))
+
+        const { error: itemsErr } = await sb.from('submission_items').insert(items)
+        if (itemsErr) throw itemsErr
+
+        showToast('התיק הוגש בהצלחה! ✓', 'success')
+        setTimeout(() => showScreen('leaderboard'), 1500)
+
+      } catch(err) {
+        console.error('Submit error:', err)
+        showToast('שגיאה בשמירה: ' + err.message, 'error')
+        btn.disabled = false
+        btn.textContent = 'הגש תיק ✓'
+      }
     }
 
     // ======== TICKER SEARCH ========
