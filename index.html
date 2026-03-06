@@ -1341,8 +1341,51 @@
     }
 
     // ======== PROFILE ========
-    function showProfile(id) {
-      const p = (STATE.liveParticipants || []).find(x => x.id === id) || MOCK_PARTICIPANTS.find(x => x.id === id);
+    async function showProfile(id) {
+      // שלוף נתונים טריים מ-Supabase
+      let p = (STATE.liveParticipants || []).find(x => x.id === id);
+      
+      try {
+        const sb = await initSupabase()
+        const { data: sub } = await sb
+          .from('submissions')
+          .select(`
+            id, portfolio_return, last_computed_at,
+            profiles (id, display_name),
+            submission_items (ticker, exchange, weight, current_price, asset_return, weighted_contribution)
+          `)
+          .eq('profile_id', id)
+          .maybeSingle()
+
+        if (sub) {
+          const profile = (STATE.liveParticipants || []).find(x => x.id === id)
+          p = {
+            id: id,
+            name: sub.profiles?.display_name || profile?.name || '?',
+            submitted: true,
+            portfolioReturn: sub.portfolio_return ? parseFloat(sub.portfolio_return) : null,
+            holdings: (sub.submission_items || []).map(item => ({
+              ticker: item.ticker,
+              exchange: item.exchange,
+              weight: parseFloat(item.weight),
+              assetReturn: item.asset_return ? parseFloat(item.asset_return) : null,
+              contribution: item.weighted_contribution ? parseFloat(item.weighted_contribution) : null,
+              lastPrice: item.current_price ? parseFloat(item.current_price) : null
+            })),
+            lastUpdate: sub.last_computed_at
+              ? new Date(sub.last_computed_at).toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'})
+              : '—'
+          }
+        } else if (!p) {
+          // משתתף ללא הגשה
+          const { data: prof } = await sb.from('profiles').select('display_name').eq('id', id).maybeSingle()
+          p = { id, name: prof?.display_name || '?', submitted: false, portfolioReturn: null, holdings: [] }
+        }
+      } catch(err) {
+        console.error('showProfile error:', err)
+        if (!p) return
+      }
+
       if (!p) return;
 
       showScreen('profile');
