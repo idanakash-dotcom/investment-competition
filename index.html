@@ -1306,7 +1306,7 @@
               <div class="rank-badge ${badgeClass}">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</div>
               <div class="leader-info">
                 <div class="leader-name">${p.name}</div>
-                <div class="leader-meta">${p.submitted ? `עודכן: ${p.lastUpdate || '—'}` : 'טרם הגיש'}</div>
+                <div class="leader-meta">${p.submitted ? ('עודכן: ' + (p.lastUpdate || '—')) : 'טרם הגיש'}</div>
               </div>
               <div class="leader-return">
                 <div class="return-value ${retClass}">${retStr}</div>
@@ -1314,7 +1314,7 @@
               </div>
             </div>
             ${holdingsPills}
-            ${ret !== null ? `<div class="leader-progress"><div class="leader-progress-fill ${ret>=0?'positive':'negative'}" style="width:${barWidth}%"></div></div>` : ''}
+            ${ret !== null ? '<div class="leader-progress"><div class="leader-progress-fill ' + (ret>=0?'positive':'negative') + '" style="width:' + barWidth + '%"></div></div>' : ''}
           </div>
         `;
       }).join('');
