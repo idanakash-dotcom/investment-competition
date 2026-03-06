@@ -1301,7 +1301,7 @@
         }
 
         return `
-          <div class="leader-card ${rankClass} animate-in delay-${Math.min(rank,5)}" onclick="showProfile(${p.id})">
+          <div class="leader-card ${rankClass} animate-in delay-${Math.min(rank,5)}" onclick="showProfile('${p.id}')">
             <div class="leader-main">
               <div class="rank-badge ${badgeClass}">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</div>
               <div class="leader-info">
