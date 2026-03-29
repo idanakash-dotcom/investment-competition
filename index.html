@@ -89,7 +89,7 @@
 
     /* Header */
     .app-header {
-      padding: 20px 20px 0;
+      padding: calc(env(safe-area-inset-top, 20px) + 12px) 20px 0;
       position: sticky;
       top: 0;
       z-index: 100;
@@ -1016,7 +1016,8 @@
 
               <button class="btn btn-secondary" style="margin-bottom:10px" onclick="setEqualWeights()">⚖ חלוקה שווה אוטומטית</button>
               <button class="btn btn-primary" id="submitBtn" onclick="submitPortfolio()">הגש תיק ✓</button>
-              <br><br>
+              <div id="editModeNote" class="validation-note hidden" style="color:var(--accent);margin:8px 0">✏️ אתה עורך תיק קיים — הגשה תדרוס את הבחירות הקודמות</div>
+              <br>
               <button class="btn btn-secondary" onclick="logoutUser()">התנתק</button>
             </div>
           </div>
@@ -1497,6 +1498,7 @@
         STATE.currentUser = { id: data.id, name: data.display_name, username }
         document.getElementById('authStep').classList.add('hidden')
         document.getElementById('portfolioStep').classList.remove('hidden')
+        await loadExistingSubmission(data.id)
         renderPortfolioBuilder()
         showToast(`שלום ${data.display_name}! 👋`, 'success')
 
@@ -1544,6 +1546,7 @@
         STATE.currentUser = { id: data.id, name: displayName, username }
         document.getElementById('authStep').classList.add('hidden')
         document.getElementById('portfolioStep').classList.remove('hidden')
+        await loadExistingSubmission(data.id)
         renderPortfolioBuilder()
         showToast(`ברוך הבא ${displayName}! 🎉`, 'success')
 
@@ -1713,6 +1716,36 @@
       return errors.length === 0;
     }
 
+    async function loadExistingSubmission(profileId) {
+      try {
+        const sb = await initSupabase()
+        const { data: sub } = await sb
+          .from('submissions')
+          .select('id, submission_items(ticker, exchange, weight)')
+          .eq('profile_id', profileId)
+          .maybeSingle()
+
+        if (sub && sub.submission_items && sub.submission_items.length > 0) {
+          // טען את הבחירות הקודמות
+          STATE.holdings = sub.submission_items.map(item => ({
+            ticker: item.ticker,
+            exchange: item.exchange,
+            weight: parseFloat(item.weight)
+          }))
+          STATE.hasSubmitted = true
+
+          // הצג הודעת עריכה
+          const editNote = document.getElementById('editModeNote')
+          if (editNote) editNote.classList.remove('hidden')
+
+          const btn = document.getElementById('submitBtn')
+          if (btn) btn.textContent = 'עדכן תיק ✓'
+        }
+      } catch(err) {
+        console.error('loadExistingSubmission error:', err)
+      }
+    }
+
     async function submitPortfolio() {
       if (!validatePortfolio()) { showToast('תקן שגיאות לפני הגשה', 'error'); return; }
       if (STATE.isLocked && !STATE.isAdmin) { showToast('ההגשות נעולות', 'error'); return; }
@@ -1758,8 +1791,11 @@
         const { error: itemsErr } = await sb.from('submission_items').insert(items)
         if (itemsErr) throw itemsErr
 
+        btn.textContent = '✓ נשמר!'
+        btn.style.background = 'var(--green)'
         showToast('התיק הוגש בהצלחה! ✓', 'success')
-        setTimeout(() => showScreen('leaderboard'), 1500)
+        STATE.hasSubmitted = true
+        setTimeout(() => showScreen('leaderboard'), 1800)
 
       } catch(err) {
         console.error('Submit error:', err)
