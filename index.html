@@ -908,6 +908,7 @@
         <div class="refresh-row">
           <span id="refreshSpinner"></span>
           <span id="lastUpdateText">עודכן לאחרונה: לפני 12 דקות</span>
+          <span id="nextRefreshTimer" style="font-size:11px;color:var(--text-muted);margin-right:8px"></span>
         </div>
 
         <!-- Leaderboard list -->
@@ -2263,9 +2264,31 @@
 
     // Auto-refresh every hour
     function startAutoRefresh() {
-      STATE.refreshInterval = setInterval(() => {
-        renderLeaderboard();
-      }, 3600000);
+      // רענון אוטומטי כל 15 דקות — שולח בקשה ל-fetch-prices ואז מרענן לידרבורד
+      const INTERVAL_MS = 15 * 60 * 1000; // 15 דקות
+
+      STATE.refreshInterval = setInterval(async () => {
+        // רענן מחירים דרך Edge Function
+        try {
+          await fetch(`${SUPABASE_URL}/functions/v1/fetch-prices`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+          })
+        } catch(e) { console.log('Auto refresh error:', e) }
+        // רענן לידרבורד
+        renderLeaderboard()
+      }, INTERVAL_MS)
+
+      // הצג טיימר ספירה לאחור לרענון הבא
+      let nextRefresh = Date.now() + INTERVAL_MS
+      setInterval(() => {
+        const remaining = Math.max(0, nextRefresh - Date.now())
+        const mins = Math.floor(remaining / 60000)
+        const secs = Math.floor((remaining % 60000) / 1000)
+        const el = document.getElementById('nextRefreshTimer')
+        if (el) el.textContent = `רענון בעוד ${mins}:${secs.toString().padStart(2,'0')}`
+        if (remaining === 0) nextRefresh = Date.now() + INTERVAL_MS
+      }, 1000)
     }
 
     // ======== SHARE ========
