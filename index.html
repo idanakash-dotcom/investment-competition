@@ -1160,7 +1160,7 @@
             weight: parseFloat(item.weight),
             assetReturn: item.asset_return ? parseFloat(item.asset_return) : 0,
             contribution: item.weighted_contribution ? parseFloat(item.weighted_contribution) : 0,
-            startPrice: 0,
+            startPrice: officialPricesMap[item.ticker + ':' + item.exchange] || 0,
             lastPrice: item.current_price ? parseFloat(item.current_price) : 0
           })),
           lastUpdate: sub.last_computed_at
@@ -1357,6 +1357,17 @@
           `)
           .eq('profile_id', id)
           .maybeSingle()
+
+        // שלוף מחירי פתיחה
+        let officialPricesMap = {}
+        if (sub?.submission_items) {
+          const tickers = sub.submission_items.map(i => i.ticker)
+          const { data: ops } = await sb
+            .from('official_prices')
+            .select('ticker, exchange, start_open')
+            .in('ticker', tickers)
+          if (ops) ops.forEach(op => { officialPricesMap[op.ticker + ':' + op.exchange] = op.start_open })
+        }
 
         if (sub) {
           const profile = (STATE.liveParticipants || []).find(x => x.id === id)
