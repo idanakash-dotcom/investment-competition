@@ -1147,6 +1147,18 @@
         if (error) throw error
         if (!data || data.length === 0) return null
 
+        // שלוף מחירי פתיחה
+        const allTickers = data.flatMap(sub => (sub.submission_items || []).map(i => i.ticker))
+        const uniqueTickers = [...new Set(allTickers)]
+        let officialPricesMap = {}
+        if (uniqueTickers.length > 0) {
+          const { data: ops } = await sb
+            .from('official_prices')
+            .select('ticker, exchange, start_open')
+            .in('ticker', uniqueTickers)
+          if (ops) ops.forEach(op => { officialPricesMap[op.ticker + ':' + op.exchange] = op.start_open })
+        }
+
         // המרה לפורמט של האפליקציה
         return data.map((sub, idx) => ({
           id: sub.id,
