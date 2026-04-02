@@ -1,21 +1,15 @@
-// fetch-prices/index.ts
-// פונקציה זו מושכת מחירים מ-Yahoo Finance ומעדכנת את ה-DB
-// להריץ: אוטומטי כל שעה, או ידני מפאנל האדמין
-
+// fetch-prices/index.ts — גרסה v3
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-// ======== הגדרות ========
 const YAHOO_BASE = "https://query1.finance.yahoo.com/v8/finance/chart"
-const DELAY_MS = 1200 // המתנה בין בקשות (כדי לא להיחסם)
+const DELAY_MS = 1200
 
-// ממיר שם בורסה לסיומת Yahoo
 function toYahooSymbol(ticker: string, exchange: string): string {
   if (exchange === "TASE") return `${ticker}.TA`
   return ticker
 }
 
-// שולף מחיר בודד מ-Yahoo
 async function fetchPrice(ticker: string, exchange: string) {
   const symbol = toYahooSymbol(ticker, exchange)
   const url = `${YAHOO_BASE}/${symbol}?interval=1d&range=5d`
@@ -27,24 +21,39 @@ async function fetchPrice(ticker: string, exchange: string) {
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${symbol}`)
   
   const data = await res.json()
-  const meta = data?.chart?.result?.[0]?.meta
+  const result = data?.chart?.result?.[0]
+  const meta = result?.meta
   
   if (!meta) throw new Error(`No data for ${symbol}`)
+
+  // שלוף מחיר סגירה אמיתי מה-OHLCV
+  const closes = result?.indicators?.quote?.[0]?.close ?? []
+  const timestamps = result?.timestamp ?? []
+  
+  // מצא את מחיר הסגירה האחרון שאינו null
+  let closePrice = meta.regularMarketPrice
+  for (let i = closes.length - 1; i >= 0; i--) {
+    if (closes[i] !== null && closes[i] !== undefined) {
+      closePrice = closes[i]
+      break
+    }
+  }
+
+  const lastTimestamp = timestamps.length > 0 
+    ? new Date(timestamps[timestamps.length - 1] * 1000).toISOString()
+    : new Date(meta.regularMarketTime * 1000).toISOString()
   
   return {
     ticker,
     exchange,
-    regular_price: meta.regularMarketPrice,
+    regular_price: closePrice,
     pre_price: meta.preMarketPrice ?? null,
     after_price: meta.postMarketPrice ?? null,
-    currency: meta.currency,
-    market_state: meta.marketState, // REGULAR / PRE / POST / CLOSED
-    timestamp: new Date(meta.regularMarketTime * 1000).toISOString()
+    timestamp: lastTimestamp
   }
 }
 
-serve(async (req) => {
-  // אפשר לקרוא גם מ-GET וגם מ-POST
+serve(async (_req) => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -52,32 +61,40 @@ serve(async (req) => {
 
   const results: any[] = []
   const errors: any[] = []
+  const priceMap: Record<string, number> = {} // ticker:exchange -> price
 
   try {
-    // 1. שלוף את כל הטיקרים הייחודיים מהגשות
-    const { data: items, error: itemsErr } = await supabase
+    // שלוף טיקרים ייחודיים
+    const { data: items } = await supabase
       .from("submission_items")
       .select("ticker, exchange")
+
+    const safeItems = items ?? []
     
-    if (itemsErr) throw itemsErr
-    
+    if (safeItems.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, updated: 0, errors: 0, message: "No submissions yet" }),
+        { headers: { "Content-Type": "application/json" } }
+      )
+    }
+
     // הסר כפילויות
     const unique = [
-      ...new Map(
-        (items ?? []).map(i => [`${i.ticker}:${i.exchange}`, i])
-      ).values()
+      ...new Map(safeItems.map(i => [`${i.ticker}:${i.exchange}`, i])).values()
     ]
 
-    console.log(`Fetching prices for ${unique.length} symbols...`)
+    console.log(`Fetching ${unique.length} symbols...`)
 
-    // 2. שלוף מחיר לכל טיקר
+    // שלוף מחירים מ-Yahoo
     for (const item of unique) {
-      await new Promise(r => setTimeout(r, DELAY_MS)) // המתן בין בקשות
+      await new Promise(r => setTimeout(r, DELAY_MS))
       
       try {
         const priceData = await fetchPrice(item.ticker, item.exchange)
+        const key = `${item.ticker}:${item.exchange}`
+        priceMap[key] = priceData.regular_price
         
-        // שמור ב-DB
+        // עדכן market_prices
         await supabase.from("market_prices").upsert({
           ticker: priceData.ticker,
           exchange: priceData.exchange,
@@ -87,97 +104,80 @@ serve(async (req) => {
           session_type: "regular",
           price_timestamp: priceData.timestamp,
           fetched_at: new Date().toISOString()
-        })
+        }, { onConflict: "ticker,exchange,session_type" })
 
-        results.push({ ticker: item.ticker, price: priceData.regular_price, ok: true })
-        console.log(`✓ ${item.ticker}: ${priceData.regular_price}`)
+        results.push({ ticker: item.ticker, price: priceData.regular_price })
         
       } catch (err) {
-        console.error(`✗ ${item.ticker}:`, err.message)
-        errors.push({ ticker: item.ticker, error: err.message })
+        errors.push({ ticker: item.ticker, error: String(err) })
       }
     }
 
-    // 3. חשב תשואות לכל המשתתפים
-    await recomputeAllReturns(supabase)
+    // שלוף מחירי פתיחה רשמיים
+    const { data: officialPrices } = await supabase
+      .from("official_prices")
+      .select("ticker, exchange, start_open")
+
+    const officialMap: Record<string, number> = {}
+    for (const op of officialPrices ?? []) {
+      officialMap[`${op.ticker}:${op.exchange}`] = parseFloat(op.start_open)
+    }
+
+    // חשב תשואות ישירות מה-priceMap
+    const { data: submissions } = await supabase
+      .from("submissions")
+      .select("id, submission_items(id, ticker, exchange, weight)")
+
+    for (const sub of submissions ?? []) {
+      let totalReturn = 0
+      let validCount = 0
+
+      for (const item of sub.submission_items ?? []) {
+        const key = `${item.ticker}:${item.exchange}`
+        const currentPrice = priceMap[key]
+        const startPrice = officialMap[key]
+
+        if (!currentPrice || !startPrice || startPrice === 0) continue
+
+        const assetReturn = (currentPrice - startPrice) / startPrice * 100
+        const contribution = (parseFloat(item.weight) / 100) * assetReturn
+        totalReturn += contribution
+        validCount++
+
+        await supabase.from("submission_items")
+          .update({
+            current_price: currentPrice,
+            asset_return: parseFloat(assetReturn.toFixed(4)),
+            weighted_contribution: parseFloat(contribution.toFixed(4))
+          })
+          .eq("id", item.id)
+      }
+
+      if (validCount > 0) {
+        await supabase.from("submissions")
+          .update({ 
+            portfolio_return: parseFloat(totalReturn.toFixed(4)),
+            last_computed_at: new Date().toISOString()
+          })
+          .eq("id", sub.id)
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        updated: results.length,
-        errors: errors.length,
-        details: results,
-        failed: errors
+        updated: results.length, 
+        errors: errors.length, 
+        details: results, 
+        failed: errors 
       }),
       { headers: { "Content-Type": "application/json" } }
     )
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ success: false, error: err.message }),
+      JSON.stringify({ success: false, error: String(err) }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     )
   }
 })
-
-// ======== חישוב תשואות ========
-async function recomputeAllReturns(supabase: any) {
-  // שלוף כל ההגשות עם הפריטים שלהן
-  const { data: submissions } = await supabase
-    .from("submissions")
-    .select("id, submission_items(*)")
-  
-  for (const sub of submissions ?? []) {
-    let totalReturn = 0
-    let allValid = true
-
-    for (const item of sub.submission_items ?? []) {
-      // שלוף מחיר התחלה רשמי
-      const { data: official } = await supabase
-        .from("official_prices")
-        .select("start_open")
-        .eq("ticker", item.ticker)
-        .eq("exchange", item.exchange)
-        .maybeSingle()
-      
-      // שלוף מחיר נוכחי
-      const { data: latest } = await supabase
-        .from("market_prices")
-        .select("price")
-        .eq("ticker", item.ticker)
-        .eq("exchange", item.exchange)
-        .eq("session_type", "regular")
-        .order("price_timestamp", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (!official?.start_open || !latest?.price) {
-        allValid = false
-        continue
-      }
-
-      // asset_return = (current - start) / start * 100
-      const assetReturn = (latest.price - official.start_open) / official.start_open * 100
-      const contribution = (item.weight / 100) * assetReturn
-      totalReturn += contribution
-
-      // עדכן פריט
-      await supabase.from("submission_items")
-        .update({
-          current_price: latest.price,
-          asset_return: parseFloat(assetReturn.toFixed(4)),
-          weighted_contribution: parseFloat(contribution.toFixed(4))
-        })
-        .eq("id", item.id)
-    }
-
-    if (allValid) {
-      await supabase.from("submissions")
-        .update({ 
-          portfolio_return: parseFloat(totalReturn.toFixed(4)),
-          last_computed_at: new Date().toISOString()
-        })
-        .eq("id", sub.id)
-    }
-  }
-}
