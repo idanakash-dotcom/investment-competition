@@ -424,6 +424,100 @@
       margin-top: 8px;
     }
     .price-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+
+    /* Share Card */
+    .share-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      z-index: 999; display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .share-card {
+      background: linear-gradient(135deg, #070d1a 0%, #0d1628 50%, #0a1520 100%);
+      border: 1px solid rgba(62,207,255,0.3);
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 0 60px rgba(62,207,255,0.15);
+      position: relative;
+    }
+    .share-card-header {
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(62,207,255,0.15);
+      padding-bottom: 16px;
+    }
+    .share-card-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+    .share-card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .share-card-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .share-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .share-row:last-child { border-bottom: none; }
+    .share-rank {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .share-name {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .share-return {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .share-bar-wrap {
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 2px;
+      margin-top: 4px;
+    }
+    .share-bar {
+      height: 3px;
+      border-radius: 2px;
+    }
+    .share-footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 10px;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(62,207,255,0.1);
+      padding-top: 12px;
+    }
+    .share-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .share-actions button {
+      flex: 1;
+    }
     .price-row:last-child { border-bottom: none; }
     .price-label { font-size: 12px; color: var(--text-secondary); }
     .price-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; direction: ltr; }
@@ -840,6 +934,7 @@
         <div class="header-actions">
           <button class="icon-btn" id="refreshBtn" title="רענן נתונים" onclick="manualRefresh()">⟳</button>
           <button class="icon-btn" title="שתף לינק" onclick="shareApp()">⬆</button>
+          <button class="icon-btn" title="צילום מסך לשיתוף" onclick="openShareCard()">📊</button>
         </div>
       </div>
       <nav class="nav-tabs" id="navTabs">
@@ -2307,6 +2402,90 @@
     });
 
     // ======== INIT ========
+    function openShareCard() {
+      const participants = (STATE.liveParticipants || [])
+        .filter(p => p.submitted && p.portfolioReturn !== null)
+        .sort((a, b) => b.portfolioReturn - a.portfolioReturn)
+
+      if (participants.length === 0) {
+        showToast('אין נתונים להצגה', 'error')
+        return
+      }
+
+      const medals = ['🥇', '🥈', '🥉']
+      const rankColors = [
+        'linear-gradient(135deg, #ffd700, #ff9500)',
+        'linear-gradient(135deg, #c0c0c0, #8fa0b5)',
+        'linear-gradient(135deg, #cd7f32, #8b4513)'
+      ]
+
+      const best = participants[0].portfolioReturn
+      const now = new Date().toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+      const rows = participants.map((p, i) => {
+        const ret = parseFloat(p.portfolioReturn)
+        const isPos = ret >= 0
+        const barWidth = best !== 0 ? Math.abs(ret / best * 100) : 0
+        const rankStyle = i < 3 ? `background: ${rankColors[i]}` : 'background: var(--bg-secondary); border: 1px solid var(--border)'
+        const rankLabel = i < 3 ? medals[i] : `#${i+1}`
+
+        return `
+          <div class="share-row">
+            <div class="share-rank" style="${rankStyle}">${rankLabel}</div>
+            <div style="flex:1">
+              <div class="share-name">${p.name}</div>
+              <div class="share-bar-wrap">
+                <div class="share-bar" style="width:${barWidth}%;background:${isPos ? 'var(--green)' : 'var(--red)'}"></div>
+              </div>
+            </div>
+            <div class="share-return" style="color:${isPos ? 'var(--green)' : 'var(--red)'}">${isPos ? '+' : ''}${ret.toFixed(2)}%</div>
+          </div>`
+      }).join('')
+
+      const overlay = document.createElement('div')
+      overlay.className = 'share-overlay'
+      overlay.id = 'shareOverlay'
+      overlay.innerHTML = `
+        <div class="share-card" id="shareCard">
+          <div class="share-card-header">
+            <div class="share-card-title">📈 תחרות השקעות Q2 2026</div>
+            <div class="share-card-subtitle">דירוג משתתפים</div>
+            <div class="share-card-date">עודכן: ${now}</div>
+          </div>
+          ${rows}
+          <div class="share-footer">investment-competition.vercel.app</div>
+          <div class="share-actions">
+            <button class="btn btn-primary" onclick="shareScreenshot()">📸 שתף</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('shareOverlay').remove()">סגור</button>
+          </div>
+        </div>`
+
+      document.body.appendChild(overlay)
+    }
+
+    async function shareScreenshot() {
+      const card = document.getElementById('shareCard')
+      if (!card) return
+
+      // הסתר כפתורים לצילום
+      const actions = card.querySelector('.share-actions')
+      actions.style.display = 'none'
+
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'תחרות השקעות Q2 2026',
+            text: 'הדירוג העדכני של תחרות ההשקעות שלנו!',
+            url: location.href
+          })
+        } else {
+          showToast('צלם מסך ושתף! 📸', 'success')
+        }
+      } catch(e) {}
+
+      actions.style.display = 'flex'
+    }
+
     function init() {
       updatePhase();
       updateCountdown();
